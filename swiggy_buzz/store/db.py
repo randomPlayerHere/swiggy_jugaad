@@ -1,27 +1,23 @@
 import sqlite3
-from typing import Optional
+from contextlib import closing
+from pathlib import Path
 
-from .. import config
+from swiggy_buzz import config
 
-# Module-level cached connection
-_conn: Optional[sqlite3.Connection] = None
+SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
 
-def get_connection() -> sqlite3.Connection:
-    """Open (or reuse) a connection to config.DB_PATH.
+def get_connection(db_path=config.DB_PATH):
+    if db_path != ":memory:":
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(db_path)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON")
+    connection.execute("PRAGMA journal_mode = WAL")
+    return connection
 
-    The connection has row_factory = sqlite3.Row, enables foreign keys
-    and sets journal_mode = WAL.
-    """
-    global _conn
-    if _conn is not None:
-        return _conn
 
-    conn = sqlite3.connect(config.DB_PATH)
-    conn.row_factory = sqlite3.Row
-    # Enable foreign key constraints
-    conn.execute("PRAGMA foreign_keys = ON;")
-    # Enable WAL mode
-    conn.execute("PRAGMA journal_mode = WAL;")
-    _conn = conn
-    return _conn
+def init_db(db_path=config.DB_PATH):
+    with closing(get_connection(db_path)) as connection:
+        connection.executescript(SCHEMA_PATH.read_text())
+        connection.commit()
