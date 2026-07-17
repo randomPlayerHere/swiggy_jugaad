@@ -14,3 +14,11 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["swiggy_buzz"]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.3.0",
+    "ipywidgets>=8.1.8",
+    "matplotlib>=3.11.0",
+    "numpy>=2.4.6",
+]
