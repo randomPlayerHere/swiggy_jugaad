@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS pantry_items (
     last_purchased_at TEXT NOT NULL,
     purchase_qty      REAL,
     decay_lambda      REAL,                 -- personal pace multiplier m (see pantry_engine/MATH.md); NULL = 1.0
+    is_out            INTEGER NOT NULL DEFAULT 0,  -- 1 = reported out (ran_out_early); row + m kept, not deleted
     UNIQUE (user_id, canonical_name)
 );
 

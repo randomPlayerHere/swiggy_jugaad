@@ -7,6 +7,7 @@ household size). Output is always a confidence, never an assertion.
 
 from swiggy_buzz.pantry_engine.confidence import (
     bucket,
+    item_bucket,
     item_confidence,
     usable_life_days,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "item_confidence",
     "usable_life_days",
     "bucket",
+    "item_bucket",
     "apply_correction",
     "next_m",
 ]

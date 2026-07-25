@@ -64,3 +64,12 @@ def bucket(confidence: float) -> str:
     if confidence >= MAYBE_AT:
         return "maybe"
     return "out"
+
+
+def item_bucket(item: PantryItem, household_size: int, now: datetime) -> str:
+    """Shelf semantics for an item (§9), with is_out as a hard override: a
+    household that reported ran_out_early reads 'out' regardless of the curve.
+    Use this rather than bucket(item_confidence(...)) so the flag is honored."""
+    if item.is_out:
+        return "out"
+    return bucket(item_confidence(item, household_size, now))

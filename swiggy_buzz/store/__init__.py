@@ -15,6 +15,7 @@ from .repo import (
     get_pantry,
     get_user,
     has_order,
+    mark_item_out,
     update_decay_lambda,
     upsert_pantry_item,
     upsert_user,

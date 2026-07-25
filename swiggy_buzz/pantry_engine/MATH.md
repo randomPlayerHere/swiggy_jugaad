@@ -131,8 +131,12 @@ Both update `decay_lambda` via `update_decay_lambda()` AND log the row via
 - `lasted_longer`: nothing else needed — lowering m instantly raises today's
   C (the user just told us it's still there, and the math now agrees more).
 - `ran_out_early`: tuning m only fixes the *future*; the item is out *now*.
-  The **bot layer** must additionally call `delete_pantry_item()` so the item
-  drops to "out" immediately and becomes a gap-order candidate.
+  The **bot layer** must additionally mark the item out (`is_out = 1`, via
+  `mark_item_out()`) so it drops to "out" immediately and becomes a gap-order
+  candidate. The row — and its learned `m` — is **kept**, not deleted:
+  deleting would discard the very lesson `ran_out_early` just taught (see the
+  repurchase rule below). `delete_pantry_item()` is reserved for a genuine
+  "remove this item" action, not for corrections.
 
 Why m (a multiplier) and not a stored absolute rate: household size changes,
 v2 quantity, and category re-classification all flow through automatically;
@@ -140,7 +144,9 @@ m only carries the *learned deviation from the prior*, which survives all of
 them.
 
 `m` is preserved on repurchase (it is a household trait, not a pack trait).
-A repurchase only resets `last_purchased_at` (and, v2, `purchase_qty`).
+A repurchase resets `last_purchased_at` and clears `is_out` (and, v2,
+`purchase_qty`); `decay_lambda` (m) is left untouched, so a household that
+kept running out early re-enters already knowing "you use this fast."
 Overlapping leftovers from a previous pack are deliberately ignored.
 
 ## 6. Reference pipeline (implementation must match)
@@ -221,6 +227,10 @@ C ≥ 0.7        "likely have"   → recipe ranker counts it as owned
 0.3 ≤ C < 0.7  "maybe"         → bot asks; the answer IS a correction
 C < 0.3        "probably out"  → gap-order candidate
 ```
+
+`is_out = 1` is a **hard override**: the item reads "out" regardless of the
+curve (the household told us directly). The bucket is computed on the item, not
+the bare confidence — see `item_bucket()`.
 
 The ask-band is the calibration engine: every "still have rice?" answer
 tunes m, so a household's questions get rarer as its model gets sharper.
