@@ -1,11 +1,12 @@
 """Core confidence math (MATH.md §2, §6). Pure functions only — no DB access,
 no datetime.now(). `now` is always a parameter so the golden vectors in §8 are
-deterministic. Timestamps are UTC ISO-8601.
+deterministic. Timestamps are UTC ISO-8601; naive datetimes (no tzinfo) are
+assumed UTC so a stored-vs-caller convention mismatch can't crash the scan.
 """
 
 import logging
 import math
-from datetime import datetime
+from datetime import datetime, timezone
 
 from swiggy_buzz.config import DEFAULT_DECAY_DAYS
 from swiggy_buzz.pantry_engine.constants import (
@@ -21,6 +22,12 @@ from swiggy_buzz.pantry_engine.constants import (
 from swiggy_buzz.store.models import PantryItem
 
 logger = logging.getLogger(__name__)
+
+
+def _as_utc(dt: datetime) -> datetime:
+    """Attach UTC to a naive datetime; leave aware ones untouched (§6). Lets
+    naive and aware timestamps be subtracted without a TypeError."""
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
 
 
 def usable_life_days(category: str, household_size: int) -> float:
@@ -40,7 +47,7 @@ def usable_life_days(category: str, household_size: int) -> float:
         s = None
 
     q = 1.0  # v2: item.purchase_qty / REF_QTY[category]
-    h = household_size ** HOUSEHOLD_EXP
+    h = max(1, household_size) ** HOUSEHOLD_EXP  # guard 0/negative → treat as 1
     consumption_days = d * q / h
     u = min(s, consumption_days) if s is not None else consumption_days
     return max(u, U_MIN_DAYS)
@@ -49,7 +56,8 @@ def usable_life_days(category: str, household_size: int) -> float:
 def item_confidence(item: PantryItem, household_size: int, now: datetime) -> float:
     """C(t) = exp(−ln20 · x²), x = m·t/U (§2). Probability the item is still
     usable. C(0)=1 exactly; C=0.05 at end of expected life."""
-    elapsed = (now - datetime.fromisoformat(item.last_purchased_at)).total_seconds() / 86400
+    purchased = _as_utc(datetime.fromisoformat(item.last_purchased_at))
+    elapsed = (_as_utc(now) - purchased).total_seconds() / 86400
     t = max(0.0, elapsed)  # future timestamp (clock skew) ⇒ just bought
     m = item.decay_lambda if item.decay_lambda is not None else 1.0
     u = usable_life_days(item.category, household_size)

@@ -21,7 +21,8 @@ DB_PATH = os.environ.get("SWIGGY_BUZZ_DB", "data/swiggy_buzz.db")
 RECIPE_DB_PATH = "data/recipes.json"
 
 # --- Pantry decay defaults (days to ~depleted, per category) ---
-# Tuned per household by corrections: λ ×1.2 if ran out early, ×0.8 if lasted.
+# Tuned per household by corrections: pace multiplier m ×1.2 if ran out early,
+# ×0.8 if lasted longer (clamped [0.2, 5.0]); see pantry_engine/MATH.md.
 DEFAULT_DECAY_DAYS = {
     "dairy": 4,
     "produce": 5,

@@ -168,6 +168,10 @@ def item_confidence(item, household_size, now) -> float:
 
 Timestamps are UTC ISO-8601; `t` is fractional days; `now` is always a
 parameter (never `datetime.now()` inside the math) so tests are deterministic.
+A naive datetime (no tzinfo), on either the stored timestamp or `now`, is
+assumed UTC rather than raising — so a stored-vs-caller convention mismatch
+cannot crash a whole-pantry scan. Likewise `household_size < 1` is treated as
+1 (guards a divide-by-zero); neither is a valid input, both are made safe.
 
 ## 7. Worked examples
 

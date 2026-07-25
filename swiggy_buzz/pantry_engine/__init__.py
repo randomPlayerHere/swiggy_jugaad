@@ -11,7 +11,11 @@ from swiggy_buzz.pantry_engine.confidence import (
     item_confidence,
     usable_life_days,
 )
-from swiggy_buzz.pantry_engine.corrections import apply_correction, next_m
+from swiggy_buzz.pantry_engine.corrections import (
+    apply_correction,
+    next_m,
+    record_correction,
+)
 
 __all__ = [
     "item_confidence",
@@ -20,4 +24,5 @@ __all__ = [
     "item_bucket",
     "apply_correction",
     "next_m",
+    "record_correction",
 ]

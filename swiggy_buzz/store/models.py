@@ -75,3 +75,10 @@ class OrderCache:
             raw_json=row["raw_json"],
             fetched_at=row["fetched_at"],
         )
+
+
+@dataclass
+class ScoredItem:
+    pantry_item : PantryItem
+    confidence_score : float
+    bucket: str

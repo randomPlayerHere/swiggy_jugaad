@@ -48,6 +48,14 @@ def get_pantry(user_id: int) -> list[PantryItem]:
         ).fetchall()
         return [PantryItem.from_row(row) for row in rows]
 
+def get_pantry_item(user_id: int, canonical_name: str) -> PantryItem | None:
+    with closing(get_connection()) as connection:
+        row = connection.execute(
+            "SELECT * FROM pantry_items WHERE user_id = ? AND canonical_name = ?",
+            (user_id, canonical_name),
+        ).fetchone()
+        return PantryItem.from_row(row) if row else None
+
 def mark_item_out(user_id: int, canonical_name: str):
     """Flag an item as out (ran_out_early) without deleting the row, so the
     learned pace multiplier m survives to the next repurchase (MATH.md §5)."""
