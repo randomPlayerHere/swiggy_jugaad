@@ -40,6 +40,27 @@ _REVOKED_STATUS = 419
 _TIMEOUT = httpx.Timeout(30.0, read=300.0)
 
 
+def _http_error_detail(exc: httpx.HTTPError) -> str:
+    """Build a useful, stable message from httpx/httpcore failures.
+
+    Some transport exceptions stringify to an empty message; include the
+    exception type and deepest available cause detail so callers can decide
+    whether to retry, reconfigure networking, or re-authenticate.
+    """
+    detail = str(exc).strip()
+    if detail:
+        return detail
+
+    cause = exc.__cause__
+    while cause is not None:
+        cause_detail = str(cause).strip()
+        if cause_detail:
+            return f"{type(exc).__name__}: {cause_detail}"
+        cause = cause.__cause__
+
+    return type(exc).__name__
+
+
 def _auth_headers(token: str | None = None) -> dict[str, str]:
     """Bearer header, or raise if we have nothing to send. Checked eagerly so
     the failure names the fix instead of surfacing as a 401 mid-request."""
@@ -74,7 +95,7 @@ def _translate(exc: Exception) -> Exception:
         return exc
     if isinstance(exc, httpx.HTTPError):
         # Timeouts, DNS, connection resets — all worth retrying.
-        return SwiggyUnavailable(str(exc) or type(exc).__name__)
+        return SwiggyUnavailable(_http_error_detail(exc))
     return exc
 
 

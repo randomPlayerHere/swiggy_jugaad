@@ -14,8 +14,24 @@ from swiggy_buzz.mcp_client.errors import (
     SwiggyUnavailable,
 )
 from swiggy_buzz.mcp_client.session import instamart_session, run, swiggy_session
+from swiggy_buzz.mcp_client.wrappers import (
+    SearchResults,
+    fetch_addresses,
+    fetch_all_orders,
+    fetch_go_to_items,
+    fetch_orders,
+    search_products,
+    with_retry,
+)
 
 __all__ = [
+    "fetch_orders",
+    "fetch_all_orders",
+    "fetch_addresses",
+    "search_products",
+    "fetch_go_to_items",
+    "SearchResults",
+    "with_retry",
     "instamart_session",
     "swiggy_session",
     "run",
