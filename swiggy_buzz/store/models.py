@@ -27,7 +27,8 @@ class PantryItem:
     last_purchased_at: str
     purchase_qty: float | None
     decay_lambda: float | None
-    
+    is_out: bool
+
     @classmethod
     def from_row(cls, row) -> "PantryItem":
         return cls(
@@ -38,6 +39,7 @@ class PantryItem:
             last_purchased_at=row["last_purchased_at"],
             purchase_qty=row["purchase_qty"],
             decay_lambda=row["decay_lambda"],
+            is_out=bool(row["is_out"]),
         )
     
 @dataclass
@@ -73,3 +75,10 @@ class OrderCache:
             raw_json=row["raw_json"],
             fetched_at=row["fetched_at"],
         )
+
+
+@dataclass
+class ScoredItem:
+    pantry_item : PantryItem
+    confidence_score : float
+    bucket: str

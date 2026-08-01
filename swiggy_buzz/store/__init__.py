@@ -5,7 +5,7 @@ confidence scoring and ingester for name normalization.
 """
 
 from .db import get_connection, init_db
-from .models import Correction, OrderCache, PantryItem, User
+from .models import Correction, OrderCache, PantryItem, User, ScoredItem
 from .repo import (
     add_correction,
     cache_order,
@@ -15,6 +15,8 @@ from .repo import (
     get_pantry,
     get_user,
     has_order,
+    mark_item_out,
+    get_pantry_item,
     update_decay_lambda,
     upsert_pantry_item,
     upsert_user,

@@ -34,7 +34,8 @@ def upsert_pantry_item(item: PantryItem):
             ON CONFLICT(user_id, canonical_name) DO UPDATE SET
                 category=excluded.category,
                 last_purchased_at=excluded.last_purchased_at,
-                purchase_qty=excluded.purchase_qty
+                purchase_qty=excluded.purchase_qty,
+                is_out=0
             """,
             (item.user_id, item.canonical_name, item.category, item.last_purchased_at, item.purchase_qty),
         )
@@ -47,7 +48,27 @@ def get_pantry(user_id: int) -> list[PantryItem]:
         ).fetchall()
         return [PantryItem.from_row(row) for row in rows]
 
+def get_pantry_item(user_id: int, canonical_name: str) -> PantryItem | None:
+    with closing(get_connection()) as connection:
+        row = connection.execute(
+            "SELECT * FROM pantry_items WHERE user_id = ? AND canonical_name = ?",
+            (user_id, canonical_name),
+        ).fetchone()
+        return PantryItem.from_row(row) if row else None
+
+def mark_item_out(user_id: int, canonical_name: str):
+    """Flag an item as out (ran_out_early) without deleting the row, so the
+    learned pace multiplier m survives to the next repurchase (MATH.md §5)."""
+    with closing(get_connection()) as connection:
+        connection.execute(
+            "UPDATE pantry_items SET is_out = 1 WHERE user_id = ? AND canonical_name = ?",
+            (user_id, canonical_name),
+        )
+        connection.commit()
+
 def delete_pantry_item(user_id: int, canonical_name: str):
+    """Genuinely remove an item (and its m). NOT used for corrections — see
+    mark_item_out() for ran_out_early (MATH.md §5)."""
     with closing(get_connection()) as connection:
         connection.execute(
             "DELETE FROM pantry_items WHERE user_id = ? AND canonical_name = ?",
