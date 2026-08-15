@@ -1,1 +1,82 @@
-[]
+[
+  {
+    "id": "aloo_sabzi",
+    "name": "Aloo Sabzi",
+    "ingredients": ["potato", "onion", "tomato", "oil", "turmeric", "red_chilli_powder", "salt", "cumin"],
+    "diet": "vegan",
+    "prep_time_minutes": 20,
+    "tags": ["north_indian", "curry", "everyday"]
+  },
+  {
+    "id": "dal_tadka",
+    "name": "Dal Tadka",
+    "ingredients": ["toor_dal", "onion", "tomato", "garlic", "ginger", "oil", "turmeric", "cumin", "salt", "ghee"],
+    "diet": "veg",
+    "prep_time_minutes": 30,
+    "tags": ["north_indian", "dal", "comfort_food"]
+  },
+  {
+    "id": "jeera_rice",
+    "name": "Jeera Rice",
+    "ingredients": ["rice", "oil", "cumin", "salt"],
+    "diet": "vegan",
+    "prep_time_minutes": 20,
+    "tags": ["rice", "quick", "side"]
+  },
+  {
+    "id": "curd_rice",
+    "name": "Curd Rice",
+    "ingredients": ["rice", "curd", "salt", "mustard_seeds"],
+    "diet": "veg",
+    "prep_time_minutes": 15,
+    "tags": ["south_indian", "rice", "cooling", "quick"]
+  },
+  {
+    "id": "vegetable_poha",
+    "name": "Vegetable Poha",
+    "ingredients": ["poha", "onion", "potato", "oil", "mustard_seeds", "turmeric", "salt", "peas", "lemon"],
+    "diet": "vegan",
+    "prep_time_minutes": 20,
+    "tags": ["breakfast", "quick", "maharashtrian"]
+  },
+  {
+    "id": "besan_chilla",
+    "name": "Besan Chilla",
+    "ingredients": ["besan", "onion", "green_chilli", "coriander", "salt", "oil"],
+    "diet": "vegan",
+    "prep_time_minutes": 15,
+    "tags": ["breakfast", "quick", "protein"]
+  },
+  {
+    "id": "bread_omelette",
+    "name": "Bread Omelette",
+    "ingredients": ["egg", "bread", "onion", "oil", "salt", "black_pepper"],
+    "diet": "egg",
+    "prep_time_minutes": 10,
+    "tags": ["breakfast", "quick", "protein"]
+  },
+  {
+    "id": "rajma_masala",
+    "name": "Rajma Masala",
+    "ingredients": ["rajma", "onion", "tomato", "garlic", "ginger", "oil", "garam_masala", "salt", "red_chilli_powder"],
+    "diet": "vegan",
+    "prep_time_minutes": 40,
+    "tags": ["north_indian", "curry", "protein"]
+  },
+  {
+    "id": "vegetable_upma",
+    "name": "Vegetable Upma",
+    "ingredients": ["suji", "onion", "mustard_seeds", "oil", "peas", "carrot", "salt", "green_chilli"],
+    "diet": "vegan",
+    "prep_time_minutes": 20,
+    "tags": ["south_indian", "breakfast", "quick"]
+  },
+  {
+    "id": "paneer_bhurji",
+    "name": "Paneer Bhurji",
+    "ingredients": ["paneer", "onion", "tomato", "capsicum", "oil", "turmeric", "salt", "garam_masala"],
+    "diet": "veg",
+    "prep_time_minutes": 20,
+    "tags": ["north_indian", "protein", "quick"]
+  }
+]
