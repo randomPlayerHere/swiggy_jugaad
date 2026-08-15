@@ -17,3 +17,11 @@ class ParsedOrder(BaseModel):
     @property
     def is_delivered(self) -> bool:
         return self.status == DELIVERED
+
+class IngestionSummary(BaseModel):
+    orders_seen: int = 0
+    orders_ingested: int = 0
+    items_added: int = 0
+    products_seen: int = 0
+    non_food :int = 0
+    unclassified: int = 0

@@ -192,5 +192,3 @@ def classify(raw_names) -> dict[str, Classification]:
     if missing:
         logger.warning("%d of %d names unclassified, e.g. %r", len(missing), len(names), missing[:3])
     return result
-
-
