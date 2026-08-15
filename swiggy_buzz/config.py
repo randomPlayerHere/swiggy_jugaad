@@ -12,8 +12,12 @@ load_dotenv()
 # --- LLM (NVIDIA NIM, OpenAI-compatible) ---
 NIM_BASE_URL = "https://integrate.api.nvidia.com/v1"
 NIM_API_KEY = os.environ.get("NVIDIA_API_KEY", "")
-NIM_MODEL = os.environ.get("NIM_MODEL", "mistralai/mistral-nemotron")
-NIM_FALLBACK_MODEL = "minimaxai/minimax-m2.7"
+# Both verified against the live endpoint on 2026-08-09, classifying real SKU
+# names identically. The previous pair is gone: minimax-m2.7 hit end of life on
+# 2026-07-27 and now answers 410, and mistral-nemotron is listed but 500s on
+# every request. Re-check these if classification starts coming back empty.
+NIM_MODEL = os.environ.get("NIM_MODEL", "minimaxai/minimax-m3")
+NIM_FALLBACK_MODEL = "nvidia/nemotron-3-super-120b-a12b"
 
 # --- Telegram ---
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")

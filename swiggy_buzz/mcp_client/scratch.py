@@ -3,7 +3,7 @@ from swiggy_buzz.mcp_client import instamart_session, run
 
 async def go():
     async with instamart_session() as s:
-        result = await s.call_tool("get_addresses", {})
+        result = await s.call_tool("get_orders", {})
         print("isError:", result.isError)
         print("blocks:", len(result.content))
         for i, block in enumerate(result.content):

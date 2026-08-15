@@ -123,3 +123,34 @@ def get_cached_orders(user_id: int) -> list[OrderCache]:
         ).fetchall()
         return [OrderCache.from_row(row) for row in rows]
 
+_MAX_SQL_PARAMS = 500  # SQLite caps host parameters per statement
+
+def get_cached_skus(raw_names: list[str]) -> dict[str, tuple[str | None, str]]:
+    """Known classifications, as {raw_name: (canonical, category)}. Absent = never classified."""
+    names = [name for name in dict.fromkeys(raw_names) if name]
+    if not names:
+        return {}  # "IN ()" is a syntax error in SQLite
+
+    cached: dict[str, tuple[str | None, str]] = {}
+    with closing(get_connection()) as connection:
+        for start in range(0, len(names), _MAX_SQL_PARAMS):
+            chunk = names[start : start + _MAX_SQL_PARAMS]
+            placeholders = ",".join("?" * len(chunk))
+            rows = connection.execute(
+                f"SELECT raw_name, canonical_name, category FROM sku_cache "
+                f"WHERE raw_name IN ({placeholders})",
+                chunk,
+            ).fetchall()
+            for row in rows:
+                cached[row["raw_name"]] = (row["canonical_name"], row["category"])
+    return cached
+
+def cache_sku(raw_name: str, canonical_name: str | None, category: str):
+    """REPLACE not IGNORE: a re-classification is likely a correction worth taking."""
+    with closing(get_connection()) as connection:
+        connection.execute(
+            "INSERT OR REPLACE INTO sku_cache (raw_name, canonical_name, category) VALUES (?, ?, ?)",
+            (raw_name, canonical_name, category),
+        )
+        connection.commit()
+
