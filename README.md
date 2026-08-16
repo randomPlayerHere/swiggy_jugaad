@@ -19,7 +19,7 @@ uv run main.py
 
 ```
 swiggy_buzz/
-├── main.py                  # entrypoint — starts the Telegram bot
+├── main.py                  # entrypoint — starts the CLI (v1); Telegram/WhatsApp later
 ├── swiggy_buzz/             # the package
 │   ├── config.py            # env vars + constants (₹1000 cap, decay defaults)
 │   ├── pantry_engine/       # core IP: decay math + confidence scoring
@@ -27,7 +27,7 @@ swiggy_buzz/
 │   ├── ingester/            # order history → canonical ingredients
 │   ├── gap_order/           # search, cart, checkout for missing items
 │   ├── mcp_client/          # typed Swiggy MCP wrappers (retries, auth)
-│   ├── bot/                 # Telegram adapter + agent loop
+│   ├── bot/                 # CLI adapter (v1) + agent loop
 │   └── store/               # SQLite models
 ├── data/
 │   └── recipes.json         # recipe DB (SQLite db lands here too, gitignored)
