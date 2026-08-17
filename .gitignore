@@ -15,6 +15,9 @@ wheels/
 # Local data
 data/*.db
 
+# Jupyter notebooks — work goes out as plain .py instead
+*.ipynb
+
 # Agent notes
 CLAUDE.MD
 claude.md
