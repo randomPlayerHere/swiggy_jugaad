@@ -286,6 +286,50 @@ async def fetch_go_to_items(address_id: str, session=None) -> list[dict]:
     return [_slim_product(p) for p in products]
 
 
+async def add_to_cart(address_id: str, items: list[dict], session=None) -> dict:
+    """Set the Instamart cart to exactly `items`, each {"spinId": ..., "quantity": ...}.
+
+    update_cart REPLACES the whole cart rather than appending — verified
+    against Builders docs, 2026-08. Call this once with the full set gap_order
+    wants to buy, not once per ingredient, or each call will wipe out the
+    items added by the call before it.
+
+    Only spinId travels here, not skuId — the pair from _slim_product is for
+    identifying a variant in search results, but update_cart's own item
+    schema only takes spinId + quantity.
+    """
+    if not address_id:
+        raise ValueError("address_id is required — call fetch_addresses() first")
+    args = {"selectedAddressId": address_id, "items": items}
+    async with _ensure_session(session) as s:
+        return await _call(s, "update_cart", args)
+
+
+async def get_cart(session=None) -> dict:
+    """Current Instamart cart: items, bill breakdown, availablePaymentMethods.
+
+    Read-only, no address needed. The bill breakdown is Swiggy's own total —
+    prefer it over summing CartLine prices client-side once a cart exists.
+    """
+    async with _ensure_session(session) as s:
+        return await _call(s, "get_cart", {})
+
+
+async def checkout(address_id: str, session=None) -> dict:
+    """Place the order, COD only — never asks the caller for a payment method
+    since config.py's COD-only constraint means this always sends "Cash".
+
+    Swiggy's own docs mark this "ALWAYS get explicit user confirmation before
+    calling this tool" — that confirmation is the caller's job, not this
+    wrapper's; it fires the instant it's called.
+    """
+    if not address_id:
+        raise ValueError("address_id is required — call fetch_addresses() first")
+    args = {"addressId": address_id, "paymentMethod": "Cash"}
+    async with _ensure_session(session) as s:
+        return await _call(s, "checkout", args)
+
+
 async def with_retry(operation, attempts: int = _RETRY_ATTEMPTS):
     """Retry a wrapper call on transient failures only.
 

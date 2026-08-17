@@ -18,3 +18,4 @@ data/*.db
 # Agent notes
 CLAUDE.MD
 claude.md
+flow.md
