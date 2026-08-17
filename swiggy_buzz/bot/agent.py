@@ -49,8 +49,17 @@ def _system_prompt(user_id: int) -> str:
 
 
 def step(user_id: int, user_text: str) -> str:
+    reply, _events = step_with_events(user_id, user_text)
+    return reply
+
+
+def step_with_events(user_id: int, user_text: str) -> tuple[str, list[dict]]:
+    """Same loop as step(), but also returns each successful tool call along
+    the way (name + result) so a web frontend can render structured cards
+    for the reply the model already saw in text."""
     state = get_or_create_state(user_id=user_id)
     state.history.append({"role": "user", "content": user_text})
+    events: list[dict] = []
     force_stop = False
     for _ in range(_MAX_TOOL_HOPS):
         messages = [{"role": "system", "content": _system_prompt(user_id)}, *state.history]
@@ -58,12 +67,12 @@ def step(user_id: int, user_text: str) -> str:
             completion = _call_llm(messages, tool_choice="none" if force_stop else "auto")
         except RuntimeError:
             logger.warning("user %s: no NIM model answered", user_id)
-            return "Sorry, I'm having trouble reaching the model right now — try again in a moment."
+            return "Sorry, I'm having trouble reaching the model right now — try again in a moment.", events
         response = completion.choices[0].message
         state.history.append(response.model_dump(exclude_none=True))
 
         if not response.tool_calls:
-            return response.content or ""
+            return response.content or "", events
 
         force_stop = False
         for call in response.tool_calls:
@@ -75,8 +84,9 @@ def step(user_id: int, user_text: str) -> str:
                 # ingester.ingest_user_orders' docstring) — short-circuit
                 # straight to "tap to reconnect" instead of leaving this
                 # tool call's response missing from history.
-                return str(e)
+                return str(e), events
 
+            events.append({"tool": call.function.name, "result": result})
             state.history.append({
                 "role": "tool",
                 "tool_call_id": call.id,
@@ -87,4 +97,4 @@ def step(user_id: int, user_text: str) -> str:
                 force_stop = True
 
     logger.warning("user %s hit the tool-hop limit", user_id)
-    return "Sorry, I'm having trouble finishing that — can you rephrase?"
+    return "Sorry, I'm having trouble finishing that — can you rephrase?", events
