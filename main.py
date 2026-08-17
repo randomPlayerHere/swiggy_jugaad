@@ -1,9 +1,10 @@
 """Entrypoint: starts the CLI (v1 interface). Run: uv run main.py"""
 
+from swiggy_buzz.bot import main as run_cli
+
 
 def main():
-    # TODO: wire up swiggy_buzz.bot once it exists
-    print("swiggy-buzz: CLI not wired up yet — run scripts/nim_smoke_test.py first")
+    run_cli()
 
 
 if __name__ == "__main__":

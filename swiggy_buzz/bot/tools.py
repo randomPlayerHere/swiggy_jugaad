@@ -49,6 +49,15 @@ def onboard_user(user_id: int, household_size: int | None = None, diet: str | No
     return {"household_size": merged.household_size, "diet": merged.diet}
 
 
+def get_household_profile(user_id: int) -> dict:
+    """The household's saved size/diet, or {} if onboard_user hasn't been
+    called yet — the read half of onboard_user."""
+    user = get_user(user_id)
+    if user is None:
+        return {}
+    return {"household_size": user.household_size, "diet": user.diet}
+
+
 def list_addresses(user_id: int) -> list[dict]:
     """Fresh from Swiggy every call, never cached — the household is meant
     to (re)pick before every gap order (prompts.py rule 3)."""
@@ -68,23 +77,27 @@ def sync_orders(user_id: int, count: int = 20) -> dict:
 
 
 def get_pantry_status(user_id: int) -> list[dict]:
+    """bucket only — no raw confidence number. The model reasons and speaks
+    in likely/maybe/out, never a percentage (see bot/prompts.py rule 1)."""
     scored = score_entire_pantry(user_id, datetime.now(timezone.utc))
     if scored is None:
         return []
     return [
-        {"name": s.pantry_item.canonical_name, "confidence": round(s.confidence_score, 2), "bucket": s.bucket}
+        {"name": s.pantry_item.canonical_name, "bucket": s.bucket}
         for s in scored
     ]
 
 
 def suggest_recipes(user_id: int, top_n: int = 3) -> list[dict]:
+    """No raw score — rank_recipes already sorts best match first, so list
+    order alone conveys ranking (see bot/prompts.py rule 1)."""
     user = get_user(user_id)
     if user is None:
         return []
     scored = score_entire_pantry(user_id, datetime.now(timezone.utc)) or []
     ranked = rank_recipes(_RECIPES, scored, user.diet)
     return [
-        {"recipe_id": r.id, "name": r.name, "score": round(s, 2), "missing_ingredients": missing}
+        {"recipe_id": r.id, "name": r.name, "missing_ingredients": missing}
         for r, s, missing in ranked[:top_n]
     ]
 
@@ -159,6 +172,14 @@ TOOL_SCHEMAS = [
                     "diet": {"type": "string", "enum": ["vegan", "veg", "egg", "non_veg"]},
                 },
             },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_household_profile",
+            "description": "The household's saved size and diet, or an empty result if they haven't been onboarded yet.",
+            "parameters": {"type": "object", "properties": {}},
         },
     },
     {
@@ -248,6 +269,7 @@ TOOL_SCHEMAS = [
 
 TOOLS = {
     "onboard_user": onboard_user,
+    "get_household_profile": get_household_profile,
     "list_addresses": list_addresses,
     "sync_orders": sync_orders,
     "get_pantry_status": get_pantry_status,

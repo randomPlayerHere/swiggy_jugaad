@@ -1,5 +1,4 @@
 import json
-import re
 import anyio
 import logging
 from contextlib import asynccontextmanager
@@ -17,14 +16,6 @@ _MAX_PAGES = 20
 
 # Retry schedule for transient failures: 1s, 2s, 4s.
 _RETRY_ATTEMPTS = 3
-
-_ADDRESS_RE = re.compile(
-    r"^\s*\d+\.\s*"                              # "1. "
-    r"\[(?P<label>[^\]]+)\]\s*"                  # "[Delhi] "
-    r"(?P<name>[^:]+):\s*"                       # "Khushal Nirwal: "
-    r"(?P<address>.+?)"                          # the address itself
-    r"\s*\(ID:\s*(?P<id>[A-Za-z0-9_-]+)\)\s*$"   # "(ID: cunil55...)"
-)
 
 
 @dataclass
@@ -110,23 +101,6 @@ def _unpack(result, tool_name: str) -> dict:
     raise SwiggyToolError(tool_name, "no JSON payload in response")
 
 
-def _first_text(result, tool_name: str) -> str:
-    """Raw text of an MCP result, for tools that answer in prose not JSON.
-
-    get_addresses is the only one so far — it returns a human-readable list
-    with IDs inline, so callers parse it themselves.
-    """
-    if result.isError:
-        detail = getattr(result.content[0], "text", "") if result.content else ""
-        raise SwiggyToolError(tool_name, detail)
-    for block in result.content:
-        text = getattr(block, "text", None)
-        if text:
-            return text
-    raise SwiggyToolError(tool_name, "empty response")
-
-
-
 async def _call(session, tool_name: str, args: dict) -> dict:
     """Run one tool and hand back its JSON payload."""
     result = await session.call_tool(tool_name, args)
@@ -167,7 +141,7 @@ async def fetch_orders(
     args = {"count": count, "orderType": order_type, "activeOnly": active_only}
     async with _ensure_session(session) as s:
         data = await _call(s, "get_orders", args)
-    return data.get("orders", [])
+    return data.get("data", {}).get("orders", [])
 
 
 async def fetch_all_orders(count: int = 20, session=None) -> list[dict]:
@@ -187,26 +161,21 @@ async def fetch_all_orders(count: int = 20, session=None) -> list[dict]:
 
 
 async def fetch_addresses(session=None) -> list[dict]:
-    """The user's saved delivery addresses, as {label, name, address, id}.
+    """The user's saved delivery addresses, as {id, tag, address}.
 
     Must run before search_products, which refuses to work without an ID.
     Returns [] when the user has none saved — that's a fact about their
     account, not a failure, so callers decide whether zero is a problem.
 
-    NOTE: get_addresses answers in display text, not JSON, with the IDs
-    inline in a numbered list. This parse breaks if Swiggy reformats that
-    message. Verified against the beta format, 2026-08.
+    get_addresses answers in JSON, under data.addresses — verified against
+    the live server, 2026-08.
     """
     async with _ensure_session(session) as s:
-        result = await s.call_tool("get_addresses", {})
-    text = _first_text(result, "get_addresses")
-
-    addresses = []
-    for line in text.splitlines():
-        match = _ADDRESS_RE.match(line)
-        if match:
-            addresses.append(match.groupdict())
-    return addresses
+        data = await _call(s, "get_addresses", {})
+    return [
+        {"id": a.get("id"), "tag": a.get("addressTag"), "address": a.get("addressLine")}
+        for a in data.get("data", {}).get("addresses", [])
+    ]
 
 
 async def search_products(
