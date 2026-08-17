@@ -7,8 +7,8 @@ from swiggy_buzz.store.models import ScoredItem
 from .models import Recipe
 
 # Weight for an ingredient's contribution to owned_fraction, by pantry bucket
-# (pantry_engine.confidence.bucket). "out" contributes 0 same as "missing" —
-# a hard override the household set explicitly, not a maybe.
+# (pantry_engine.confidence.bucket). "out" contributes 0, same as "missing":
+# a hard override the household set explicitly.
 BUCKET_WEIGHT = {"likely": 1.0, "maybe": 0.5, "out": 0.0}
 
 # Term weights for score(). Equal by default; tune here, not inline, so the
@@ -18,19 +18,15 @@ WEIGHT_OWNED = 1.0
 WEIGHT_TASTE = 1.0
 WEIGHT_SPEED = 1.0
 
-# Diet permissiveness, least to most restrictive-*compatible*: a "veg" eater
-# can eat "vegan" food (vegan has no meat, dairy or egg — strictly a subset of
-# what a vegetarian avoids), an "egg" eater (eggetarian) can eat "veg" and
-# "vegan" food too, and "non_veg" can eat anything. So a user's diet sets a
-# ceiling on the index of recipe diets they'll see, not an exact-match filter
-# — exact match would wrongly hide a perfectly fine vegan recipe from a
-# vegetarian user.
+# Diet order, most to least restrictive: vegan < veg < egg < non_veg. A
+# user's diet is a ceiling on what they'll see, not an exact match, so a
+# vegetarian still sees vegan recipes.
 DIET_HIERARCHY = ["vegan", "veg", "egg", "non_veg"]
 
 
 def _pantry_lookup(scored_items: list[ScoredItem]) -> dict[str, ScoredItem]:
-    """{canonical_name: ScoredItem}, last one wins if somehow duplicated —
-    callers pass one user's pantry, which is already unique per the DB schema."""
+    """{canonical_name: ScoredItem}, last one wins if somehow duplicated.
+    Callers pass one user's pantry, which is already unique per the DB schema."""
     return {s.pantry_item.canonical_name: s for s in scored_items}
 
 
@@ -66,18 +62,17 @@ def missing_ingredients(recipe: Recipe, pantry: dict[str, ScoredItem]) -> list[s
 
 def taste_fit(recipe: Recipe) -> float:
     """Stub: no taste-preference signal exists on User yet. Returns a constant
-    so this term doesn't skew ranking until real preference data lands —
-    wire this to a real signal once one exists, don't leave it silently
-    contributing a fake number to every recipe's score forever."""
+    so this term doesn't skew ranking. Wire this to a real signal once one
+    exists."""
     return 1.0
 
 
 def score(recipe: Recipe, pantry: dict[str, ScoredItem], prep_time_min: int) -> float:
     """%owned + taste fit + 1/prep_time, each term normalized to ~[0, 1] so
     none dominates. Speed term is (fastest recipe's time / this recipe's
-    time), so the fastest recipe in the candidate set scores 1.0 on this term
-    and slower recipes scale down — same shape as 1/prep_time, just anchored
-    so it lives on the same scale as the other two terms."""
+    time), so the fastest recipe in the candidate set scores 1.0 and slower
+    recipes scale down: same shape as 1/prep_time, anchored to the same
+    scale as the other two terms."""
     owned = owned_fraction(recipe, pantry)
     taste = taste_fit(recipe)
     speed = prep_time_min / recipe.prep_time_minutes

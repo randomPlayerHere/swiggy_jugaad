@@ -9,10 +9,9 @@ from swiggy_buzz.mcp_client.wrappers import search_products
 async def _ensure_session(session):
     """Yield the caller's session, or open one for the whole batch.
 
-    Mirrors wrappers._ensure_session (private there, so not imported) — the
-    point is the same: resolve_ingredients loops over many ingredients, and
-    without this every one of them would open its own connection instead of
-    sharing one.
+    Mirrors wrappers._ensure_session (private there, so not imported).
+    resolve_ingredients loops over many ingredients; without this, each
+    one would open its own connection instead of sharing one.
     """
     if session is not None:
         yield session

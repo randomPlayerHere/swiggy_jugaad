@@ -12,9 +12,8 @@ from .tools import TOOL_SCHEMAS, dispatch
 logger = logging.getLogger(__name__)
 
 # Short timeout, no SDK-level retries: our own two-model fallback in
-# _call_llm is the retry strategy. The SDK's defaults (600s read timeout,
-# 2 silent retries with backoff) would double up on that and hide a stuck
-# call behind "…thinking" for minutes before we ever see the failure.
+# _call_llm is the retry strategy. SDK defaults (600s read, 2 silent
+# retries) would double up and hide a stuck call for minutes.
 _client = OpenAI(api_key=NIM_API_KEY, base_url=NIM_BASE_URL, timeout=25.0, max_retries=0)
 _MAX_TOOL_HOPS = 8
 _NO_MORE_TOOLS_AFTER = {"start_gap_order"}
@@ -80,10 +79,10 @@ def step_with_events(user_id: int, user_text: str) -> tuple[str, list[dict]]:
             try:
                 result = dispatch(call.function.name, args, user_id)
             except (SwiggyAuthExpired, SwiggyNotAuthenticated) as e:
-                # Deliberately escapes the tool layer (see
-                # ingester.ingest_user_orders' docstring) — short-circuit
-                # straight to "tap to reconnect" instead of leaving this
-                # tool call's response missing from history.
+                # Escapes the tool layer on purpose (see
+                # ingester.ingest_user_orders' docstring): short-circuit to
+                # "tap to reconnect" instead of leaving this tool call's
+                # response missing from history.
                 return str(e), events
 
             events.append({"tool": call.function.name, "result": result})

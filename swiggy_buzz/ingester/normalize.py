@@ -1,12 +1,12 @@
 """Raw Swiggy SKU name -> canonical ingredient, via the LLM.
 
-Swiggy hands us marketing strings ("Amul Taaza Toned Milk 500 ml") and no
-category of any kind, so working out that this is `milk`, and that milk decays
-like `dairy`, is entirely our problem. A keyword matcher loses this fight —
-"Dove Milk Cream Bathing Bar" is soap — so the model does the reading.
+Swiggy gives us marketing strings ("Amul Taaza Toned Milk 500 ml") and no
+category, so working out that this is `milk`, decaying like `dairy`, is on
+us. A keyword matcher fails here ("Dove Milk Cream Bathing Bar" is soap),
+so the model reads it.
 
-Expensive per call, but only ever paid once per distinct SKU: the cache layer
-sits on top of this. A user's whole order history is one or two calls.
+Expensive per call, but paid once per distinct SKU: the cache layer sits
+on top of this. A user's whole order history is one or two calls.
 """
 
 import json
@@ -21,10 +21,10 @@ from swiggy_buzz.ingester.vocabulary import CANONICAL_NAMES, SKIP, category_for
 
 logger = logging.getLogger(__name__)
 
-# Built once at import: 67 ingredient names is a lot of string to rebuild on
-# every call, and a prompt that varies between runs makes a bad answer harder
-# to reproduce. Categories are read off DEFAULT_DECAY_DAYS rather than typed
-# out, so adding a decay bucket to config can never leave this prompt stale.
+# Built once at import: rebuilding 67 names on every call is wasteful, and
+# a prompt that varies between runs makes bad answers harder to reproduce.
+# Categories come from DEFAULT_DECAY_DAYS, not typed out, so a new decay
+# bucket can't leave this prompt stale.
 _CATEGORIES = ", ".join(sorted(DEFAULT_DECAY_DAYS))
 
 SYSTEM_PROMPT = f"""You classify grocery products for an Indian kitchen-inventory app.

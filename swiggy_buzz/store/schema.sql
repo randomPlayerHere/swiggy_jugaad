@@ -37,11 +37,11 @@ CREATE TABLE IF NOT EXISTS order_cache (
     PRIMARY KEY (user_id, order_id)
 );
 
--- What the LLM worked out a raw Swiggy SKU name means. Deliberately NOT keyed
--- by user: "Amul Taaza Toned Milk 500 ml" is milk for everyone, so this is a
--- fact about the world, not about a household. Every user warms the cache for
--- the next one, and rows can exist before any user does (hence no FK).
--- raw_name is the lookup key, so the primary key is the only index needed.
+-- What the LLM worked out a raw Swiggy SKU name means. Not keyed by user:
+-- "Amul Taaza Toned Milk 500 ml" is milk for everyone, a fact about the
+-- world, not a household. Every user warms the cache for the next one;
+-- rows can exist before any user does (hence no FK). raw_name is the
+-- lookup key, so the primary key is the only index needed.
 CREATE TABLE IF NOT EXISTS sku_cache (
     raw_name       TEXT PRIMARY KEY,     -- exactly as parse.py stripped it
     canonical_name TEXT,                 -- NULL for non-food, paired with 'skip'

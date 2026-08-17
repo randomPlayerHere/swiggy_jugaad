@@ -1,31 +1,30 @@
-"""The canonical ingredient vocabulary — the shared language of the app.
+"""The canonical ingredient vocabulary: the shared language of the app.
 
-Two consumers, and they must agree exactly:
+Two consumers must agree on these names exactly:
 
   * the ingester, which constrains the LLM to these names, so a product is
-    "tomato" every time and not "tomatoes" on Tuesday. Each distinct string
-    becomes its own pantry_items row with its own decay clock (the table is
-    UNIQUE on user_id + canonical_name), so drift silently splits one
+    "tomato" every time, not "tomatoes" on Tuesday. Each distinct string
+    becomes its own pantry_items row with its own decay clock (the table
+    is UNIQUE on user_id + canonical_name), so drift silently splits one
     ingredient into several half-confident ones.
   * the recipe DB, which lists ingredients by these same names. A recipe
     asking for "wheat flour" against a pantry holding "atta" scores 0% owned.
 
-Swiggy never tells us a category — no Instamart tool returns one, verified
-against the live server — so every category here is our own judgement call.
+No Instamart tool returns a category (verified against the live server),
+so every category here is our own call.
 
-Categories are *decay buckets*, not food groups: the only question each one
-answers is "how fast does this leave the kitchen?" That is why ghee sits with
-oil rather than dairy, and why sugar and tea sit under spices. Read them as
-shelf-life classes and the odd-looking placements come out right. Values must
-be keys of config.DEFAULT_DECAY_DAYS — checked at import, below.
+Categories are decay buckets, not food groups: each one just answers "how
+fast does this leave the kitchen?" That's why ghee sits with oil, not
+dairy, and sugar and tea sit under spices. Values must be keys of
+config.DEFAULT_DECAY_DAYS, checked at import below.
 """
 
 from swiggy_buzz.config import DEFAULT_DECAY_DAYS
 
-# Pseudo-category for things that are not food: notebooks, shampoo, batteries.
-# Not a real bucket — nothing with this category ever reaches the pantry. It
-# exists so "known non-food" is a stored, cacheable answer rather than a miss,
-# otherwise every ingest re-asks the LLM about the same bar of soap.
+# Pseudo-category for non-food: notebooks, shampoo, batteries. Not a real
+# bucket; nothing with this category reaches the pantry. Exists so "known
+# non-food" is cached, so ingest doesn't re-ask the LLM about the same bar
+# of soap every time.
 SKIP = "skip"
 
 VOCABULARY: dict[str, str] = {
@@ -88,16 +87,16 @@ VOCABULARY: dict[str, str] = {
     "rajma": "pulses",
     "chole": "pulses",
 
-    # --- oil: one generic entry on purpose. "Do I have oil?" is the question
-    # a recipe asks; mustard vs sunflower vs refined would fragment the pantry
-    # into three half-stocked rows answering it worse. Ghee lives here for its
-    # shelf life, not its origin.
+    # --- oil: one generic entry on purpose. "Do I have oil?" is the
+    # question a recipe asks; splitting mustard/sunflower/refined would
+    # fragment the pantry into half-stocked rows. Ghee lives here for
+    # shelf life, not origin.
     "oil": "oil",
     "ghee": "oil",
 
-    # --- spices: the near-immortal shelf. Salt, sugar, tea and coffee are not
-    # spices, but they deplete on the same ~90-day timescale, which is the only
-    # thing this key controls.
+    # --- spices: the near-immortal shelf. Salt, sugar, tea and coffee
+    # aren't spices, but they deplete on the same ~90-day timescale, which
+    # is all this key tracks.
     "salt": "spices",
     "sugar": "spices",
     "turmeric": "spices",
@@ -120,8 +119,9 @@ VOCABULARY: dict[str, str] = {
     "cornflakes": "snacks",
 }
 
-# Sorted so the LLM prompt is byte-stable between runs — a prompt that shuffles
-# itself defeats any prompt caching and makes bad answers harder to reproduce.
+# Sorted so the LLM prompt is byte-stable between runs. A prompt that
+# shuffles itself defeats prompt caching and makes bad answers harder to
+# reproduce.
 CANONICAL_NAMES: list[str] = sorted(VOCABULARY)
 
 
@@ -138,8 +138,8 @@ def category_for(canonical_name: str) -> str | None:
 def _validate() -> None:
     """Fail loudly at import if a category isn't a real decay bucket.
 
-    A typo like "diary" would not raise anywhere else — usable_life_days()
-    falls back to D=21 for unknown categories and merely logs, so milk would
+    A typo like "diary" wouldn't raise anywhere else. usable_life_days()
+    falls back to D=21 for unknown categories and just logs, so milk would
     quietly decay like rice for the life of the project. Cheap to check once.
     """
     unknown = {

@@ -1,15 +1,15 @@
 """One-time Swiggy login. Run: uv run scripts/swiggy_login.py
 
-Swiggy has no API keys — you authenticate with OAuth 2.1 + PKCE, in a browser,
-with phone + OTP. This script drives that flow once and prints the resulting
-bearer token for you to paste into .env as SWIGGY_ACCESS_TOKEN.
+No API keys. You authenticate with OAuth 2.1 + PKCE in a browser, with
+phone + OTP. This script drives that flow once and prints the bearer token
+to paste into .env as SWIGGY_ACCESS_TOKEN.
 
-The token lasts ~5 days and there are no refresh tokens in v1, so re-run this
-when it dies (notably: before a demo, not during one).
+Token lasts ~5 days, no refresh in v1. Re-run this when it dies (before a
+demo, not during one).
 
-The tiny localhost listener below exists only because OAuth must redirect
-somewhere. It handles exactly one request and shuts down. The app itself never
-serves HTTP — see mcp_client/session.py, which only spends the token.
+The localhost listener below exists only because OAuth must redirect
+somewhere. It handles one request and shuts down. The app itself never
+serves HTTP; see mcp_client/session.py, which only spends the token.
 """
 
 import sys
@@ -42,7 +42,7 @@ _PAGE = b"""<!doctype html><meta charset=utf-8>
 
 class _MemoryTokenStorage(TokenStorage):
     """Holds the token just long enough to print it. Nothing is written to
-    disk — the token's permanent home is your .env, pasted by hand."""
+    disk; the token's permanent home is your .env, pasted by hand."""
 
     def __init__(self) -> None:
         self.tokens: OAuthToken | None = None
@@ -121,9 +121,9 @@ async def main() -> None:
         callback_handler=_callback_handler,
     )
 
-    # Since mcp 1.28 the transport takes a pre-built httpx client rather than an
-    # auth= argument, so the OAuth provider is attached here instead. Timeouts
-    # match the SDK's own defaults (long read is for SSE).
+    # Since mcp 1.28 the transport takes a pre-built httpx client instead of an
+    # auth= argument, so the OAuth provider attaches here. Timeouts match the
+    # SDK's own defaults (long read is for SSE).
     async with httpx.AsyncClient(
         auth=oauth,
         timeout=httpx.Timeout(30.0, read=300.0),
@@ -134,9 +134,8 @@ async def main() -> None:
         ) as (read, write, _):
             async with ClientSession(read, write) as session:
                 await session.initialize()
-                # Proof the token actually works, and a free look at the real
-                # tool names/params — better than trusting the docs, which have
-                # drifted.
+                # Proves the token works and shows the real tool names/params,
+                # since the docs have drifted.
                 tools = await session.list_tools()
                 print(f"\nConnected. Instamart exposes {len(tools.tools)} tools:")
                 for tool in tools.tools:

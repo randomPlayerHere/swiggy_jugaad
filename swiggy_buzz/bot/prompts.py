@@ -1,6 +1,5 @@
 """System prompt for the agent loop (bot/agent.py). Encodes the house rules
-from CLAUDE.MD as instructions the LLM actually follows at runtime, not just
-documentation that lives next to the code.
+from CLAUDE.MD as instructions the LLM follows at runtime.
 """
 
 SYSTEM_PROMPT = """You are the swiggy-buzz assistant: a household's kitchen-inventory \

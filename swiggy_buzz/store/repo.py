@@ -26,7 +26,7 @@ def get_user(user_id: int) -> User | None:
         return User.from_row(row) if row else None
 
 def mark_address_confirmed(user_id: int):
-    """Flip address_confirmed without touching household_size/diet — unlike
+    """Flip address_confirmed without touching household_size/diet, unlike
     upsert_user, which overwrites all three columns from whatever User
     instance it's given."""
     with closing(get_connection()) as connection:
@@ -78,7 +78,7 @@ def mark_item_out(user_id: int, canonical_name: str):
         connection.commit()
 
 def delete_pantry_item(user_id: int, canonical_name: str):
-    """Genuinely remove an item (and its m). NOT used for corrections — see
+    """Genuinely remove an item (and its m). Not used for corrections; see
     mark_item_out() for ran_out_early (MATH.md §5)."""
     with closing(get_connection()) as connection:
         connection.execute(

@@ -1,7 +1,7 @@
-"""Pantry-engine tests. The golden vectors and property list come straight from
-MATH.md §8 (the source of truth); the rest are extra edge/robustness cases —
-timezone handling, household guards, fractional days, is_out override, and the
-correction round-trip through the DB.
+"""Pantry-engine tests. The golden vectors and property list come straight
+from MATH.md §8 (the source of truth); the rest are extra edge/robustness
+cases: timezone handling, household guards, fractional days, is_out
+override, and the correction round-trip through the DB.
 """
 
 import sqlite3
@@ -90,8 +90,8 @@ def test_confidence_bounded_in_unit_interval():
 
 
 def test_confidence_strictly_positive_while_plausibly_stocked():
-    # C ∈ (0, 1] holds strictly within ~1.5 lives — the range where the belief
-    # is still live. Beyond that the exp() underflows toward 0 (see below).
+    # C ∈ (0, 1] holds strictly within ~1.5 lives, the range where the belief
+    # is still live. Beyond that exp() underflows toward 0 (see below).
     u = usable_life_days("rice_grains", 3)
     for t in (0, u / 2, u, 1.5 * u):
         c = item_confidence(make_item("rice_grains", t), 3, NOW)
@@ -100,8 +100,8 @@ def test_confidence_strictly_positive_while_plausibly_stocked():
 
 def test_far_past_life_underflows_to_zero_but_buckets_out():
     # A forgotten item many lives overdue underflows to exactly 0.0. MATH.md §1
-    # says C ∈ (0,1]; this float artifact is left unfloored because it's
-    # behaviorally harmless — bucket(0.0) == "out", which is the correct answer.
+    # says C ∈ (0,1]; this float artifact is left unfloored since it's
+    # harmless: bucket(0.0) == "out" is the correct answer anyway.
     c = item_confidence(make_item("rice_grains", 10_000), 3, NOW)
     assert c == 0.0
     assert bucket(c) == "out"
@@ -133,8 +133,8 @@ def test_naive_now_does_not_crash():
 
 
 def test_malformed_timestamp_still_raises():
-    # A garbage timestamp is corrupt data, not a convention issue — surfacing it
-    # is deliberate (a whole-pantry scan should skip/log the bad row itself).
+    # A garbage timestamp is corrupt data, not a convention issue. It should
+    # surface here (a whole-pantry scan should skip/log the bad row itself).
     bad = PantryItem(1, 1, "milk", "dairy", "not-a-date", None, None, False)
     with pytest.raises(ValueError):
         item_confidence(bad, 1, NOW)

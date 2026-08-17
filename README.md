@@ -92,6 +92,3 @@ swiggy_buzz/
 - **₹1000 cart cap** on order placement — gap baskets stay small
 - **COD only** — no online payment
 - Dineout: free reservations only (not used in this submission)
-
-See [CLAUDE.MD](CLAUDE.MD) for the full architecture, MVP scope, and
-conventions.

@@ -4,7 +4,7 @@ ran_out_early → m ×1.2 (consume faster); lasted_longer → m ×0.8 (slower),
 both clamped to [0.2, 5.0]. The bot's one-call entry point is
 record_correction(): it looks up the item, tunes and persists m, logs the row,
 and on ran_out_early also marks the item out (is_out=1) so it drops to 'out'
-now — the row and its learned m are kept for the next repurchase (§5).
+now, while the row and its learned m are kept for the next repurchase (§5).
 apply_correction() is the lower-level primitive: it only tunes m (the caller
 supplies current_m and, for ran_out_early, must mark the item out itself).
 """

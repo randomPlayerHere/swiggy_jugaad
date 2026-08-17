@@ -22,10 +22,9 @@ _RETRY_ATTEMPTS = 3
 class SearchResults:
     """What a product search found.
 
-    Two lists, not one, because a stockout is a normal outcome: `products`
-    is what matches, `similar` is what Swiggy suggests instead. The house
-    rule is never to silent-swap — so the alternatives come back alongside
-    the matches and a human chooses.
+    Two lists because a stockout is normal: `products` is exact matches,
+    `similar` is what Swiggy suggests instead. We never silent-swap, so both
+    come back and a human picks.
     """
 
     products: list[dict] = field(default_factory=list)
@@ -39,10 +38,10 @@ class SearchResults:
 def _slim_product(product: dict) -> dict:
     """Keep only the fields gap_order and the LLM actually use.
 
-    Raw search responses run ~45 KB per query — image URLs, ratings, promo
+    Raw search responses run ~45 KB per query: image URLs, ratings, promo
     flags, delivery estimates. Passing that on burns LLM context on data
-    nobody reads. Both spinId and skuId are kept: cart operations need the
-    pair, and productId will not do.
+    nobody reads. Both spinId and skuId are kept; cart operations need the
+    pair, and productId won't do.
     """
     return {
         "name": product.get("displayName"),
@@ -78,8 +77,8 @@ def _in_stock_only(products: list[dict]) -> list[dict]:
 def _unpack(result, tool_name: str) -> dict:
     """Pull the JSON payload out of an MCP tool result.
 
-    Swiggy mixes prose and JSON across content blocks — get_orders answers
-    with a sentence followed by the data — so scan for the first parseable
+    Swiggy mixes prose and JSON across content blocks: get_orders answers
+    with a sentence followed by the data. Scan for the first parseable
     block rather than trusting content[0].
     """
     if result.isError:
@@ -111,7 +110,7 @@ async def _call(session, tool_name: str, args: dict) -> dict:
 async def _ensure_session(session=None):
     """Yield the caller's session, or open a temporary one.
 
-    A caller-supplied session is never closed here — it isn't ours to close.
+    A caller-supplied session is never closed here; it isn't ours to close.
     Lets one bot turn make several calls over a single connection.
     """
     if session is not None:
@@ -129,13 +128,13 @@ async def fetch_orders(
 ) -> list[dict]:
     """Recent Instamart orders, each with its items and purchase date.
 
-    Orders carry `createdAt`, which is what pantry_engine's decay curve runs
-    on — without it an item has no age and so no confidence.
+    Orders carry `createdAt`, which is what pantry_engine's decay curve
+    runs on; without it an item has no age and so no confidence.
 
     Two limits, both verified against the live server:
       * History reaches back ~15 days only. Not a `count` limit; `hasMore`
         comes back false however many you ask for.
-      * `orderType` defaults to DASH. INSTAMART is a separate history — use
+      * `orderType` defaults to DASH. INSTAMART is a separate history; use
         fetch_all_orders() for both.
     """
     args = {"count": count, "orderType": order_type, "activeOnly": active_only}
@@ -164,10 +163,10 @@ async def fetch_addresses(session=None) -> list[dict]:
     """The user's saved delivery addresses, as {id, tag, address}.
 
     Must run before search_products, which refuses to work without an ID.
-    Returns [] when the user has none saved — that's a fact about their
-    account, not a failure, so callers decide whether zero is a problem.
+    Returns [] when the user has none saved. That's a fact about their
+    account, not a failure; callers decide whether zero is a problem.
 
-    get_addresses answers in JSON, under data.addresses — verified against
+    get_addresses answers in JSON, under data.addresses, verified against
     the live server, 2026-08.
     """
     async with _ensure_session(session) as s:
@@ -183,15 +182,15 @@ async def search_products(
 ) -> SearchResults:
     """Buyable products matching `query` at the given address.
 
-    Args are checked here rather than at Swiggy so a mistake fails instantly
-    with a message naming the fix, not a round-trip later.
+    Args are checked here rather than at Swiggy, so a mistake fails
+    instantly with a message naming the fix, not a round-trip later.
 
-    Returns SearchResults, not a bare list, because Swiggy answers with two
-    sets: what matched, and what it suggests instead. Both are needed to
-    offer an alternative on a stockout without silently swapping.
+    Returns SearchResults because Swiggy answers with two sets: what
+    matched, and what it suggests instead. Both are needed to offer an
+    alternative on a stockout without silently swapping.
 
-    Out-of-stock variants — and products left with none — are dropped, and
-    what remains is slimmed to the buyable facts (see _slim_product).
+    Out-of-stock variants, and products left with none, are dropped; what
+    remains is slimmed to the buyable facts (see _slim_product).
     """
     if not address_id:
         raise ValueError("address_id is required — call fetch_addresses() first")
@@ -214,16 +213,15 @@ async def search_products(
 async def fetch_go_to_items(address_id: str, session=None) -> list[dict]:
     """The user's regularly-bought items, across every page.
 
-    Reaches further back than get_orders' ~15-day window, which makes it the
-    only long-range view of what a household actually buys.
+    Reaches further back than get_orders' ~15-day window, so it's the only
+    long-range view of what a household actually buys.
 
-    Carries no dates, though — it is a list of products, not of purchase
-    events — so it cannot feed the decay curve on its own. Treat it as
-    evidence of habit, not of when something was bought.
+    Carries no dates, so it can't feed the decay curve on its own. Treat it
+    as evidence of habit, not of when something was bought.
 
-    Deliberately NOT stock-filtered, unlike search_products: whether the
-    store happens to have an item today says nothing about whether the
-    household keeps it. Filtering here would discard real habits.
+    Not stock-filtered, unlike search_products: whether the store has an
+    item today says nothing about whether the household keeps it.
+    Filtering here would discard real habits.
     """
     if not address_id:
         raise ValueError("address_id is required — call fetch_addresses() first")
@@ -241,9 +239,10 @@ async def fetch_go_to_items(address_id: str, session=None) -> list[dict]:
                 break
             products.extend(page)
 
-            # nextOffset arrives as a string, and "0" is truthy — comparing
-            # the parsed number is what actually stops the loop. Bailing when
-            # it fails to advance guards against a server that never moves.
+            # nextOffset arrives as a string, and "0" is truthy; comparing
+            # the parsed number is what actually stops the loop. Bailing
+            # when it fails to advance guards against a server that never
+            # moves.
             try:
                 next_offset = int(payload.get("nextOffset", 0))
             except (TypeError, ValueError):
@@ -258,12 +257,12 @@ async def fetch_go_to_items(address_id: str, session=None) -> list[dict]:
 async def add_to_cart(address_id: str, items: list[dict], session=None) -> dict:
     """Set the Instamart cart to exactly `items`, each {"spinId": ..., "quantity": ...}.
 
-    update_cart REPLACES the whole cart rather than appending — verified
-    against Builders docs, 2026-08. Call this once with the full set gap_order
-    wants to buy, not once per ingredient, or each call will wipe out the
-    items added by the call before it.
+    update_cart REPLACES the whole cart rather than appending (verified
+    against Builders docs, 2026-08). Call this once with the full set
+    gap_order wants to buy, not once per ingredient, or each call wipes
+    out the items added by the call before it.
 
-    Only spinId travels here, not skuId — the pair from _slim_product is for
+    Only spinId travels here, not skuId. The pair from _slim_product is for
     identifying a variant in search results, but update_cart's own item
     schema only takes spinId + quantity.
     """
@@ -277,7 +276,7 @@ async def add_to_cart(address_id: str, items: list[dict], session=None) -> dict:
 async def get_cart(session=None) -> dict:
     """Current Instamart cart: items, bill breakdown, availablePaymentMethods.
 
-    Read-only, no address needed. The bill breakdown is Swiggy's own total —
+    Read-only, no address needed. The bill breakdown is Swiggy's own total;
     prefer it over summing CartLine prices client-side once a cart exists.
     """
     async with _ensure_session(session) as s:
@@ -285,12 +284,12 @@ async def get_cart(session=None) -> dict:
 
 
 async def checkout(address_id: str, session=None) -> dict:
-    """Place the order, COD only — never asks the caller for a payment method
+    """Place the order, COD only. Never asks the caller for a payment method,
     since config.py's COD-only constraint means this always sends "Cash".
 
-    Swiggy's own docs mark this "ALWAYS get explicit user confirmation before
-    calling this tool" — that confirmation is the caller's job, not this
-    wrapper's; it fires the instant it's called.
+    Swiggy's own docs mark this "ALWAYS get explicit user confirmation
+    before calling this tool". That confirmation is the caller's job, not
+    this wrapper's; it fires the instant it's called.
     """
     if not address_id:
         raise ValueError("address_id is required — call fetch_addresses() first")
@@ -306,13 +305,13 @@ async def with_retry(operation, attempts: int = _RETRY_ATTEMPTS):
 
     SwiggyUnavailable (network trouble, 5xx) is worth another go.
     SwiggyAuthExpired and SwiggyToolError are not: a dead token stays dead
-    and bad arguments stay bad, so those propagate immediately rather than
+    and bad arguments stay bad, so those propagate immediately instead of
     making the user wait out a backoff for news we already have.
 
-    Takes a zero-arg callable so each attempt builds a fresh request — and,
-    for wrappers called without a session, a fresh connection. Don't wrap a
-    call that reuses a session you passed in: if that session is what broke,
-    retrying on it cannot help.
+    Takes a zero-arg callable so each attempt builds a fresh request, and
+    for wrappers called without a session, a fresh connection. Don't wrap
+    a call that reuses a session you passed in: if that session is what
+    broke, retrying on it can't help.
     """
     for attempt in range(attempts):
         try:

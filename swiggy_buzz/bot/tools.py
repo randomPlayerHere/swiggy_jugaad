@@ -1,15 +1,13 @@
 """The LLM-facing menu of actions (bot/agent.py dispatches tool calls here).
 
-Each function is a household-meaningful action, built by composing the
-lower-level modules (store, ingester, pantry_engine, recipe, gap_order,
-mcp_client) together with our own policy: the ₹1000 cap, the re-ask-address
-rule, and the build-cart/confirm-cart split (see bot/prompts.py). The
-functions in mcp_client.wrappers are never exposed to the model directly —
-this file is the only thing it gets to call.
+Each function composes the lower-level modules (store, ingester,
+pantry_engine, recipe, gap_order, mcp_client) with our own policy: the
+₹1000 cap, the re-ask-address rule, and the build-cart/confirm-cart split
+(see bot/prompts.py). mcp_client.wrappers functions are never exposed to
+the model directly; this file is the only thing it gets to call.
 
-user_id is always a real Python argument here, but TOOL_SCHEMAS never
-includes it as a parameter — dispatch() binds it from the session, so the
-model can never choose which household it's acting on.
+TOOL_SCHEMAS never includes user_id as a parameter. dispatch() binds it
+from the session, so the model can never choose which household it acts on.
 """
 
 from datetime import datetime, timezone
@@ -25,17 +23,15 @@ from swiggy_buzz.store.repo import get_user, mark_address_confirmed, upsert_user
 
 from .session_state import PendingOrder, get_or_create_state
 
-# Loaded once at import, like ingester/normalize.py's SYSTEM_PROMPT — a
+# Loaded once at import, like ingester/normalize.py's SYSTEM_PROMPT. A
 # recipe DB read on every suggest_recipes() call would be wasted work.
 _RECIPES = load_recipes_from_dicts()
 
 
 def onboard_user(user_id: int, household_size: int | None = None, diet: str | None = None) -> dict:
-    """Create or update the household. Read-modify-write: upsert_user
-    overwrites household_size/diet/address_confirmed together, so calling
-    this again later (e.g. household size changed) without carrying the
-    existing row forward would silently reset whatever the LLM didn't
-    mention this time.
+    """Create or update the household. upsert_user overwrites
+    household_size/diet/address_confirmed together, so this reads the
+    existing row first and carries forward whatever the LLM didn't mention.
     """
     existing = get_user(user_id)
     merged = User(
@@ -51,7 +47,7 @@ def onboard_user(user_id: int, household_size: int | None = None, diet: str | No
 
 def get_household_profile(user_id: int) -> dict:
     """The household's saved size/diet, or {} if onboard_user hasn't been
-    called yet — the read half of onboard_user."""
+    called yet. The read half of onboard_user."""
     user = get_user(user_id)
     if user is None:
         return {}
@@ -59,7 +55,7 @@ def get_household_profile(user_id: int) -> dict:
 
 
 def list_addresses(user_id: int) -> list[dict]:
-    """Fresh from Swiggy every call, never cached — the household is meant
+    """Fresh from Swiggy every call, never cached. The household is meant
     to (re)pick before every gap order (prompts.py rule 3)."""
     return run(lambda: fetch_addresses())
 
@@ -89,7 +85,7 @@ def get_pantry_status(user_id: int) -> list[dict]:
 
 
 def suggest_recipes(user_id: int, top_n: int = 3) -> list[dict]:
-    """No raw score — rank_recipes already sorts best match first, so list
+    """No raw score. rank_recipes already sorts best match first, so list
     order alone conveys ranking (see bot/prompts.py rule 1)."""
     user = get_user(user_id)
     if user is None:
@@ -107,8 +103,8 @@ def _line_dict(line: CartLine) -> dict:
 
 
 async def _resolve_and_cap(address_id: str, ingredients: list[str]):
-    """One session for both calls — resolve_ingredients and apply_cap
-    would otherwise each open their own Swiggy connection."""
+    """One session for both calls, so resolve_ingredients and apply_cap
+    don't each open their own Swiggy connection."""
     async with instamart_session() as session:
         lines, unresolved = await resolve_ingredients(address_id, ingredients, session=session)
     kept, dropped = apply_cap(lines)
@@ -116,7 +112,7 @@ async def _resolve_and_cap(address_id: str, ingredients: list[str]):
 
 
 def start_gap_order(user_id: int, address_id: str, ingredients: list[str]) -> dict:
-    """Builds and stages a cart. Never checks out — confirm_gap_order() is
+    """Builds and stages a cart. Never checks out; confirm_gap_order() is
     the only function allowed to do that (prompts.py rule 4)."""
     kept, dropped, unresolved = run(lambda: _resolve_and_cap(address_id, ingredients))
     state = get_or_create_state(user_id)
@@ -130,9 +126,8 @@ def start_gap_order(user_id: int, address_id: str, ingredients: list[str]) -> di
 
 
 def confirm_gap_order(user_id: int) -> dict:
-    """Places the real, COD order. Refuses if there's no staged cart —
-    guards against being called without a start_gap_order earlier this
-    conversation."""
+    """Places the real, COD order. Refuses if there's no staged cart, i.e.
+    no start_gap_order earlier this conversation."""
     state = get_or_create_state(user_id)
     pending = state.pending_order
     if pending is None:
@@ -156,8 +151,8 @@ def record_item_correction(user_id: int, canonical_name: str, direction: str) ->
 
 
 # --- LLM-facing registry ---------------------------------------------------
-# user_id is deliberately absent from every schema below: dispatch() is the
-# only place model-supplied args and the session's user_id meet.
+# user_id is absent from every schema below: dispatch() is the only place
+# model-supplied args and the session's user_id meet.
 
 TOOL_SCHEMAS = [
     {

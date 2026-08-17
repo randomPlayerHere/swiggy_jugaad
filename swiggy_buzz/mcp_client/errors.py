@@ -1,11 +1,11 @@
-"""Failure modes of the Swiggy MCP connection, split by what the caller should
-do about them.
+"""Failure modes of the Swiggy MCP connection, split by what the caller
+should do about them.
 
-The distinction that matters: SwiggyAuthExpired is NOT retryable. Retrying a
-dead token just burns time — the only cure is a human re-running the login
-script. SwiggyUnavailable is the opposite: retry with backoff.
+SwiggyAuthExpired is not retryable: retrying a dead token just burns time,
+the only fix is re-running the login script. SwiggyUnavailable is
+retryable with backoff.
 
-Per https://mcp.swiggy.com/builders/docs/start/authenticate — 401 means the
+Per https://mcp.swiggy.com/builders/docs/start/authenticate, 401 means the
 session is gone, 419 means it was revoked. Neither has a refresh token in v1.
 """
 
@@ -45,7 +45,7 @@ class SwiggyUnavailable(SwiggyError):
 
 class SwiggyToolError(SwiggyError):
     """A tool ran and reported failure (isError on the MCP result). The tool
-    itself is fine — the request was bad, or the item/cart/address wasn't
+    itself is fine; the request was bad, or the item/cart/address wasn't
     valid. Not retryable without changing the arguments."""
 
     def __init__(self, tool_name: str, detail: str):

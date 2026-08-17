@@ -10,10 +10,9 @@ from .models import CartLine, OrderSummary
 
 def ensure_address_confirmed(user_id: int) -> None:
     """Refuse to proceed unless the household has already confirmed a
-    delivery address (store.models.User.address_confirmed) — CLAUDE.MD:
+    delivery address (store.models.User.address_confirmed); CLAUDE.MD:
     always confirm delivery address before checkout. Driving that
-    confirmation is the bot layer's job; this only enforces it already
-    happened.
+    confirmation is the bot layer's job; this just enforces it happened.
     """
     user = get_user(user_id)
     if user is None or not user.address_confirmed:
@@ -29,9 +28,9 @@ async def place_order(
 ) -> OrderSummary:
     """Push `lines` into the real Swiggy cart, then check out COD.
 
-    Caller must already have explicit user confirmation in hand — checkout()
-    fires the instant it's called, per Swiggy's own docs, so there's no
-    dry-run step here to lean on.
+    Caller must already have explicit user confirmation in hand. checkout()
+    fires the instant it's called, per Swiggy's own docs; there's no
+    dry-run step to lean on.
     """
     ensure_address_confirmed(user_id)
 
@@ -40,8 +39,8 @@ async def place_order(
 
     result = await swiggy_checkout(address_id, session=session)
     # Response nesting under "data" mirrors every other wrapper's pattern
-    # (search_products, your_go_to_items) but isn't confirmed against a live
-    # checkout call yet — verify order_id actually lands here on the first
+    # (search_products, your_go_to_items), but not yet confirmed against a
+    # live checkout call. Verify order_id actually lands here on the first
     # real order.
     payload = result.get("data", result)
     order_id = payload.get("orderId")

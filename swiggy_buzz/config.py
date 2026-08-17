@@ -29,7 +29,7 @@ SWIGGY_MCP_FOOD_URL = "https://mcp.swiggy.com/food"
 SWIGGY_MCP_DINEOUT_URL = "https://mcp.swiggy.com/dineout"
 
 # Bearer token from scripts/swiggy_login.py. OAuth 2.1 + PKCE, ~5 day lifetime,
-# no refresh token in v1 — when it expires you re-run the login script.
+# no refresh token in v1. Re-run the login script when it expires.
 SWIGGY_ACCESS_TOKEN = os.environ.get("SWIGGY_ACCESS_TOKEN", "")
 
 # Local listener the one-time OAuth flow redirects back to. Only used by the
@@ -39,7 +39,7 @@ SWIGGY_OAUTH_CALLBACK_PATH = "/callback"
 
 # --- Swiggy MCP constraints (beta) ---
 CART_CAP_INR = 1000  # hard cap on order placement
-# Immediate delivery only; COD only — enforced by Swiggy, mirrored in gap_order.
+# Immediate delivery only; COD only. Enforced by Swiggy, mirrored in gap_order.
 
 # --- Storage ---
 DB_PATH = os.environ.get("SWIGGY_BUZZ_DB", "data/swiggy_buzz.db")

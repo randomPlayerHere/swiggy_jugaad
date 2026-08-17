@@ -1,5 +1,5 @@
 """Recipe scoring/ranking tests. Uses hand-built ScoredItems rather than real
-pantry_engine output — scoring.py only cares about the bucket string, so
+pantry_engine output; scoring.py only cares about the bucket string, so
 these stay decoupled from decay math changes."""
 
 import pytest
