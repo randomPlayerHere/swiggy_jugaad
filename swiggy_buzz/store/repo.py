@@ -25,6 +25,17 @@ def get_user(user_id: int) -> User | None:
         ).fetchone()
         return User.from_row(row) if row else None
 
+def mark_address_confirmed(user_id: int):
+    """Flip address_confirmed without touching household_size/diet — unlike
+    upsert_user, which overwrites all three columns from whatever User
+    instance it's given."""
+    with closing(get_connection()) as connection:
+        connection.execute(
+            "UPDATE users SET address_confirmed = 1 WHERE user_id = ?",
+            (user_id,),
+        )
+        connection.commit()
+
 def upsert_pantry_item(item: PantryItem):
     with closing(get_connection()) as connection:
         connection.execute(
