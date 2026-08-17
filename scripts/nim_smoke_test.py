@@ -18,7 +18,7 @@ for model in (NIM_MODEL, NIM_FALLBACK_MODEL):
             messages=[{"role": "user", "content": "Hi! Who are you?"}],
             temperature=0.6,
             top_p=0.7,
-            max_tokens=4096,
+            max_tokens=4096
         )
     except Exception as e:
         print(f"[{model}] FAILED: {e}")
