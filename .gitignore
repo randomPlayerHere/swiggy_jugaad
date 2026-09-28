@@ -22,3 +22,6 @@ data/*.db
 CLAUDE.MD
 claude.md
 flow.md
+
+# Demo prep (pitch script, charts, diagrams) — not part of the submission
+demo/

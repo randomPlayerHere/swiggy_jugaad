@@ -1841,7 +1841,7 @@ wheels = [
 ]
 
 [[package]]
-name = "swiggy-buzz"
+name = "swiggy-jugaad"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

@@ -4,13 +4,12 @@ cases: timezone handling, household guards, fractional days, is_out
 override, and the correction round-trip through the DB.
 """
 
-import sqlite3
 from datetime import datetime, timedelta, timezone
 from functools import reduce
 
 import pytest
 
-from swiggy_buzz.pantry_engine import (
+from swiggy_jugaad.pantry_engine import (
     bucket,
     item_bucket,
     item_confidence,
@@ -18,8 +17,8 @@ from swiggy_buzz.pantry_engine import (
     record_correction,
     usable_life_days,
 )
-from swiggy_buzz.pantry_engine.confidence import LN20
-from swiggy_buzz.store.models import PantryItem, User
+from swiggy_jugaad.pantry_engine.confidence import LN20
+from swiggy_jugaad.store.models import PantryItem, User
 
 NOW = datetime(2026, 7, 25, tzinfo=timezone.utc)
 
@@ -193,26 +192,7 @@ def test_is_out_overrides_a_fresh_curve():
 # Corrections round-trip through the DB
 # --------------------------------------------------------------------------
 
-@pytest.fixture
-def repo(tmp_path, monkeypatch):
-    """A store.repo wired to a fresh temp SQLite DB for this test."""
-    from swiggy_buzz.store import db as dbmod
-    from swiggy_buzz.store import repo as repo_module
-
-    path = tmp_path / "test.db"
-
-    def connect():
-        conn = sqlite3.connect(path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
-        return conn
-
-    monkeypatch.setattr(repo_module, "get_connection", connect)
-    with connect() as conn:
-        conn.executescript(dbmod.SCHEMA_PATH.read_text())
-        conn.commit()
-    return repo_module
-
+# `repo` fixture: tests/conftest.py
 
 def _seed_item(repo, category="rice_grains"):
     repo.upsert_user(User(1, 4, None, False, "2026-07-25"))

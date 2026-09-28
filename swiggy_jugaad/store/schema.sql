@@ -1,0 +1,54 @@
+-- SQLite schema for swiggy_jugaad. Applied via init_db(); every statement is
+-- idempotent so it can run on each startup.
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id           INTEGER PRIMARY KEY,  -- Telegram chat id
+    household_size    INTEGER NOT NULL DEFAULT 1,
+    diet              TEXT,                 -- veg / non-veg / vegan / jain
+    address_confirmed INTEGER NOT NULL DEFAULT 0,
+    created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS pantry_items (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id           INTEGER NOT NULL REFERENCES users(user_id),
+    canonical_name    TEXT NOT NULL,
+    category          TEXT NOT NULL,        -- keys into config.DEFAULT_DECAY_DAYS
+    last_purchased_at TEXT NOT NULL,
+    purchase_qty      REAL,
+    decay_lambda      REAL,                 -- personal pace multiplier m (see pantry_engine/MATH.md); NULL = 1.0
+    is_out            INTEGER NOT NULL DEFAULT 0,  -- 1 = reported out (ran_out_early); row + m kept, not deleted
+    UNIQUE (user_id, canonical_name)
+);
+
+CREATE TABLE IF NOT EXISTS corrections (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id        INTEGER NOT NULL REFERENCES users(user_id),
+    canonical_name TEXT NOT NULL,
+    direction      TEXT NOT NULL CHECK (direction IN ('ran_out_early', 'lasted_longer')),
+    created_at     TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS order_cache (
+    user_id    INTEGER NOT NULL REFERENCES users(user_id),
+    order_id   TEXT NOT NULL,
+    raw_json   TEXT NOT NULL,
+    fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, order_id)
+);
+
+-- What the LLM worked out a raw Swiggy SKU name means. Not keyed by user:
+-- "Amul Taaza Toned Milk 500 ml" is milk for everyone, a fact about the
+-- world, not a household. Every user warms the cache for the next one;
+-- rows can exist before any user does (hence no FK). raw_name is the
+-- lookup key, so the primary key is the only index needed.
+CREATE TABLE IF NOT EXISTS sku_cache (
+    raw_name       TEXT PRIMARY KEY,     -- exactly as parse.py stripped it
+    canonical_name TEXT,                 -- NULL for non-food, paired with 'skip'
+    category       TEXT NOT NULL,        -- decay bucket, or 'skip'
+    created_at     TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_pantry_items_user ON pantry_items(user_id);
+CREATE INDEX IF NOT EXISTS idx_corrections_user_item
+    ON corrections(user_id, canonical_name);

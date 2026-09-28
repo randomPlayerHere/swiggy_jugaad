@@ -25,7 +25,7 @@ from mcp.client.auth import OAuthClientProvider, TokenStorage
 from mcp.client.streamable_http import streamable_http_client
 from mcp.shared.auth import OAuthClientInformationFull, OAuthClientMetadata, OAuthToken
 
-from swiggy_buzz import config
+from swiggy_jugaad import config
 
 REDIRECT_URI = (
     f"http://localhost:{config.SWIGGY_OAUTH_CALLBACK_PORT}"
@@ -33,7 +33,7 @@ REDIRECT_URI = (
 )
 
 _PAGE = b"""<!doctype html><meta charset=utf-8>
-<title>swiggy-buzz</title>
+<title>swiggy-jugaad</title>
 <body style="font-family:system-ui;padding:3rem;max-width:32rem">
 <h2>Connected.</h2>
 <p>You can close this tab and go back to the terminal.</p>
@@ -111,7 +111,7 @@ async def main() -> None:
     oauth = OAuthClientProvider(
         server_url=config.SWIGGY_MCP_INSTAMART_URL,
         client_metadata=OAuthClientMetadata(
-            client_name="swiggy-buzz",
+            client_name="swiggy-jugaad",
             redirect_uris=[REDIRECT_URI],
             scope="mcp:tools",
             token_endpoint_auth_method="none",

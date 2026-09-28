@@ -1,0 +1,68 @@
+"""Central config: env vars and product constants. Import from here, never
+read os.environ elsewhere."""
+
+import os
+
+from dotenv import load_dotenv
+
+# Load .env once, at import. Real environment variables win over the file, so
+# `SWIGGY_JUGAAD_DB=... uv run ...` still overrides for one-off runs.
+load_dotenv()
+
+# --- LLM (NVIDIA NIM, OpenAI-compatible) ---
+NIM_BASE_URL = "https://integrate.api.nvidia.com/v1"
+NIM_API_KEY = os.environ.get("NVIDIA_API_KEY", "")
+# nemotron-3-super verified on 2026-09-28 against the live endpoint: native
+# tool calling through the full agent loop, and SKU classification. It was the
+# fallback until minimax-m3 hit end of life on 2026-09-09 (410 on every call,
+# which cost a wasted round-trip per hop). The fallback is the same family,
+# listed on /v1/models but not yet exercised. Override either via env.
+NIM_MODEL = os.environ.get("NIM_MODEL", "nvidia/nemotron-3-super-120b-a12b")
+NIM_FALLBACK_MODEL = os.environ.get("NIM_FALLBACK_MODEL", "nvidia/nemotron-3-ultra-550b-a55b")
+
+# --- Telegram ---
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+
+# --- Swiggy MCP ---
+# Server URLs per https://mcp.swiggy.com/builders/docs/start/consumer/use-in-ai-client
+SWIGGY_MCP_INSTAMART_URL = "https://mcp.swiggy.com/im"
+SWIGGY_MCP_FOOD_URL = "https://mcp.swiggy.com/food"
+SWIGGY_MCP_DINEOUT_URL = "https://mcp.swiggy.com/dineout"
+
+# Bearer token from scripts/swiggy_login.py. OAuth 2.1 + PKCE, ~5 day lifetime,
+# no refresh token in v1. Re-run the login script when it expires.
+SWIGGY_ACCESS_TOKEN = os.environ.get("SWIGGY_ACCESS_TOKEN", "")
+
+# Demo only: a JSON of sample orders (see ingester/replay.py) that
+# sync_orders reads instead of Swiggy's order history, which only reaches
+# back ~15 days. Only the fetch is replaced: classification, decay and
+# recipes run as normal, and addresses/search/cart/checkout stay live.
+SWIGGY_ORDERS_REPLAY = os.environ.get("SWIGGY_ORDERS_REPLAY", "")
+
+# Local listener the one-time OAuth flow redirects back to. Only used by the
+# login script; the app itself never serves HTTP.
+SWIGGY_OAUTH_CALLBACK_PORT = int(os.environ.get("SWIGGY_OAUTH_CALLBACK_PORT", "3030"))
+SWIGGY_OAUTH_CALLBACK_PATH = "/callback"
+
+# --- Swiggy MCP constraints (beta) ---
+CART_CAP_INR = 1000  # hard cap on order placement
+# Immediate delivery only; COD only. Enforced by Swiggy, mirrored in gap_order.
+
+# --- Storage ---
+DB_PATH = os.environ.get("SWIGGY_JUGAAD_DB", "data/swiggy_jugaad.db")
+RECIPE_DB_PATH = "data/recipes.json"
+
+# --- Pantry decay defaults (days to ~depleted, per category) ---
+# Tuned per household by corrections: pace multiplier m ×1.2 if ran out early,
+# ×0.8 if lasted longer (clamped [0.2, 5.0]); see pantry_engine/MATH.md.
+DEFAULT_DECAY_DAYS = {
+    "dairy": 4,
+    "produce": 5,
+    "bread": 4,
+    "eggs": 10,
+    "rice_grains": 21,
+    "pulses": 30,
+    "oil": 45,
+    "spices": 90,
+    "snacks": 7,
+}

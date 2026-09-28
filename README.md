@@ -1,4 +1,4 @@
-# swiggy-buzz
+# swiggy-jugaad
 
 An agent that infers a household's kitchen inventory from Swiggy Instamart
 order history (consumption-decay math — no pantry API exists), suggests
@@ -19,7 +19,7 @@ Swiggy Builders Club.
 2. **Infer** — decay each item from its last purchase using a per-category
    half-life (milk ~4d, rice ~21d, spices ~90d), scaled by household size and
    a personal pace multiplier that tunes itself from corrections you give it.
-   See [`pantry_engine/MATH.md`](swiggy_buzz/pantry_engine/MATH.md) for the
+   See [`pantry_engine/MATH.md`](swiggy_jugaad/pantry_engine/MATH.md) for the
    full spec.
 3. **Suggest** — rank the recipe DB by percent of ingredients already owned,
    taste fit, and prep time. Confidence is always shown, never asserted
@@ -30,7 +30,9 @@ Swiggy Builders Club.
 ## Interfaces
 
 - **Web chat** (demo) — a phone-frame chat UI served by FastAPI, driving the
-  same agent loop as the CLI.
+  same agent loop as the CLI, streamed turn by turn. Beside it, an "under the
+  hood" panel shows what the model believes (every pantry item's decay curve
+  and confidence) and what it does (each LLM hop and tool call, live).
 - **CLI** — plain stdin/stdout REPL, same agent underneath.
 
 Telegram/WhatsApp is a planned adapter behind the same `agent.step()` loop,
@@ -52,8 +54,37 @@ uv run scripts/swiggy_login.py   # paste the printed token into .env as SWIGGY_A
 
 ```bash
 uv run main.py                              # CLI
-uv run uvicorn swiggy_buzz.webapp:app --reload   # web chat UI, at http://localhost:8000
+uv run uvicorn swiggy_jugaad.webapp:app --reload   # web chat UI, at http://localhost:8000
 ```
+
+### Web API
+
+| Endpoint | What |
+| --- | --- |
+| `POST /api/chat/stream` | one turn as server-sent events: `llm_start/llm_end`, `tool_start/tool_end`, then `reply` or `error` |
+| `POST /api/chat` | the same turn, as one JSON response |
+| `GET /api/pantry` | every pantry item with confidence, age, usable life and pace — UI only, never sent to the model |
+| `GET /api/status` | household, Swiggy token expiry, order-history source, model (no network calls) |
+| `POST /api/reset` | forget the conversation (household and pantry are kept) |
+
+## Demo
+
+```bash
+uv run scripts/demo_preflight.py     # keys, models, token expiry, Swiggy reachable — no NIM inference spent
+uv run scripts/reset_demo_user.py    # clean slate for the web household (keeps the SKU cache)
+uv run uvicorn swiggy_jugaad.webapp:app
+# open http://localhost:8000/?privacy  — ?privacy blurs street addresses for screen recordings
+```
+
+Swiggy's MCP only returns ~15 days of order history. For an account that
+hasn't ordered lately, set `SWIGGY_ORDERS_REPLAY=data/demo_orders.json` in
+`.env`: `sync_orders` then replays those sample orders (dated relative to
+now) instead of fetching. Everything after the fetch — LLM classification,
+decay, recipe ranking — runs unchanged, and addresses, search, cart and
+checkout stay live. The UI shows a "sample order history" pill while it's on.
+
+Checkout is real: confirming a cart places a cash-on-delivery Instamart
+order. The backend refuses to check out in the same turn the cart was built.
 
 ## Tests
 
@@ -64,12 +95,12 @@ uv run pytest
 ## Folder structure
 
 ```
-swiggy_buzz/
+swiggy_jugaad/
 ├── main.py                  # entrypoint — starts the CLI (v1)
-├── swiggy_buzz/             # the package
+├── swiggy_jugaad/             # the package
 │   ├── config.py            # env vars + constants (₹1000 cap, decay defaults)
 │   ├── webapp.py            # FastAPI app — serves the web chat UI + /api/chat
-│   ├── static/              # web chat UI (phone-frame HTML/CSS/JS)
+│   ├── static/              # web chat UI + "under the hood" panel (HTML/CSS/JS)
 │   ├── pantry_engine/       # core IP: decay math + confidence scoring
 │   ├── recipe/              # JSON recipe DB + scoring/ranking
 │   ├── ingester/            # order history → canonical ingredients
@@ -78,9 +109,12 @@ swiggy_buzz/
 │   ├── bot/                 # CLI + web adapters, agent loop, tool dispatch
 │   └── store/               # SQLite models
 ├── data/
-│   └── recipes.json         # recipe DB (SQLite db lands here too, gitignored)
+│   ├── recipes.json         # recipe DB (SQLite db lands here too, gitignored)
+│   └── demo_orders.json     # sample order history for SWIGGY_ORDERS_REPLAY
 ├── scripts/
 │   ├── swiggy_login.py      # one-time Swiggy OAuth login
+│   ├── demo_preflight.py    # pre-recording checks
+│   ├── reset_demo_user.py   # wipe the web demo household between takes
 │   ├── nim_smoke_test.py    # LLM endpoint check
 │   └── tool_call_smoke_test.py
 └── tests/

@@ -4,15 +4,15 @@ these stay decoupled from decay math changes."""
 
 import pytest
 
-from swiggy_buzz.recipe.loader import load_recipes_from_dicts
-from swiggy_buzz.recipe.models import Recipe
-from swiggy_buzz.recipe.scoring import (
+from swiggy_jugaad.recipe.loader import load_recipes_from_dicts
+from swiggy_jugaad.recipe.models import Recipe
+from swiggy_jugaad.recipe.scoring import (
     missing_ingredients,
     owned_fraction,
     rank_recipes,
     score,
 )
-from swiggy_buzz.store.models import PantryItem, ScoredItem
+from swiggy_jugaad.store.models import PantryItem, ScoredItem
 
 
 def make_scored(canonical_name: str, bucket: str) -> ScoredItem:

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Swiggy Jugaad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>" />
+</head>
+<body>
+  <div class="stage">
+    <header class="stage-header">
+      <div class="stage-brand">
+        <span class="stage-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+            <path d="M4 10.5c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M3 11h18a1 1 0 0 1 1 1v.5a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 3 12.5V11z" fill="white"/>
+            <path d="M6 15h12l-1.1 4.4a2 2 0 0 1-1.94 1.6H9.04a2 2 0 0 1-1.94-1.6L6 15z" fill="white"/>
+          </svg>
+        </span>
+        <div>
+          <div class="stage-title">Swiggy Jugaad</div>
+          <div class="stage-tagline">Swiggy knows what enters your kitchen. <em>We know what's still in it.</em></div>
+        </div>
+      </div>
+      <div class="stage-badges">
+        <span class="stage-badge">Built on Swiggy MCP</span>
+        <span class="stage-badge">NVIDIA NIM</span>
+      </div>
+    </header>
+
+    <div class="stage-main">
+      <!-- ============ the product: a phone chat ============ -->
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="status-bar">
+          <span class="status-time" id="status-time">9:41</span>
+          <span class="status-icons">
+            <svg viewBox="0 0 18 12" width="18" height="12" fill="currentColor"><rect x="0" y="6" width="3" height="6" rx="0.5"/><rect x="4.5" y="4" width="3" height="8" rx="0.5"/><rect x="9" y="2" width="3" height="10" rx="0.5"/><rect x="13.5" y="0" width="3" height="12" rx="0.5"/></svg>
+            <svg viewBox="0 0 16 12" width="16" height="12" fill="currentColor"><path d="M8 2.5c2.3 0 4.4.9 6 2.4l-1.4 1.4C11.3 5 9.7 4.3 8 4.3S4.7 5 3.4 6.3L2 4.9C3.6 3.4 5.7 2.5 8 2.5zm0 3.4c1.3 0 2.5.5 3.4 1.4l-1.4 1.4c-.5-.5-1.2-.8-2-.8s-1.5.3-2 .8L4.6 7.3c.9-.9 2.1-1.4 3.4-1.4zm0 3.5c.6 0 1.1.5 1.1 1.1S8.6 11.6 8 11.6s-1.1-.5-1.1-1.1S7.4 9.4 8 9.4z"/></svg>
+            <svg viewBox="0 0 25 12" width="25" height="12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor"/><rect x="2" y="2" width="18" height="8" rx="1.5" fill="currentColor"/><rect x="22.5" y="4" width="1.5" height="4" rx="0.75" fill="currentColor"/></svg>
+          </span>
+        </div>
+
+        <header class="app-header">
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true">🧺</span>
+            <div class="brand-text">
+              <span class="brand-title">Swiggy Jugaad</span>
+              <span class="brand-subtitle" id="brand-subtitle">your kitchen, inferred</span>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="icon-btn brain-toggle" id="brain-toggle" aria-label="Show what the model sees" title="Under the hood">
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="white" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+            </button>
+            <button type="button" class="icon-btn" id="new-chat" aria-label="New chat" title="New chat">
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="white" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <main class="chat" id="chat" aria-live="polite"></main>
+
+        <div class="quick-replies" id="quick-replies"></div>
+
+        <form class="composer" id="composer" autocomplete="off">
+          <input type="text" id="composer-input" placeholder="Message Swiggy Jugaad…" autocomplete="off" maxlength="500" />
+          <button type="submit" id="composer-send" aria-label="Send">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+              <path d="M3 11.5L20.5 3.5L14 20.5L11 13L3 11.5Z" fill="white" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+
+      <!-- ============ the internals: what the model believes and does ============ -->
+      <aside class="brain" id="brain" aria-label="Under the hood">
+        <div class="brain-head">
+          <div class="brain-head-row">
+            <div>
+              <div class="brain-title"><span class="dot live"></span>Under the hood</div>
+              <div class="brain-sub">What the model believes and does. The chat never states these numbers.</div>
+            </div>
+            <button type="button" class="brain-close" id="brain-close" aria-label="Close">✕</button>
+          </div>
+          <div class="pills" id="status-pills"></div>
+        </div>
+
+        <section class="brain-section pantry-section">
+          <div class="section-head">
+            <div>
+              <h3>Pantry model</h3>
+              <div class="section-sub">Weibull decay per item, <span class="mono">C(t) = e<sup>−ln20·(t/L)²</sup></span>, scaled by household size and a learned pace · most at risk first</div>
+            </div>
+            <div class="bucket-counts" id="bucket-counts"></div>
+          </div>
+          <div class="pantry-list" id="pantry-list"></div>
+        </section>
+
+        <section class="brain-section activity-section">
+          <div class="section-head">
+            <div>
+              <h3>Agent activity</h3>
+              <div class="section-sub">Every LLM hop and tool call, as it happens</div>
+            </div>
+            <span class="live-tag" id="live-tag">idle</span>
+          </div>
+          <div class="activity-feed" id="activity-feed"></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script src="/common.js"></script>
+  <script src="/brain.js"></script>
+  <script src="/chat.js"></script>
+</body>
+</html>

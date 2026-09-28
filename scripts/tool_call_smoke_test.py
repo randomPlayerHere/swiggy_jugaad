@@ -10,7 +10,7 @@ import sys
 
 from openai import OpenAI
 
-from swiggy_buzz.config import NIM_API_KEY, NIM_BASE_URL, NIM_FALLBACK_MODEL, NIM_MODEL
+from swiggy_jugaad.config import NIM_API_KEY, NIM_BASE_URL, NIM_FALLBACK_MODEL, NIM_MODEL
 
 if not NIM_API_KEY:
     sys.exit("NVIDIA_API_KEY is not set (see .env.example)")
