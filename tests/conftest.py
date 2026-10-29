@@ -1,6 +1,11 @@
+import os
 import sqlite3
 
 import pytest
+
+# The OpenAI clients are built at import and refuse an empty key. Tests fake
+# every LLM call, so any value works; this lets the suite run with no .env.
+os.environ.setdefault("NVIDIA_API_KEY", "test-key-unused")
 
 
 @pytest.fixture

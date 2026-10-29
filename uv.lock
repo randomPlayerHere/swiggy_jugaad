@@ -1848,7 +1848,6 @@ dependencies = [
     { name = "fastapi" },
     { name = "mcp" },
     { name = "openai" },
-    { name = "p2j" },
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "uvicorn" },
@@ -1861,6 +1860,7 @@ dev = [
     { name = "matplotlib" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "p2j" },
     { name = "pytest" },
 ]
 
@@ -1869,7 +1869,6 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "mcp", specifier = ">=1.28.1" },
     { name = "openai", specifier = ">=2.44.0" },
-    { name = "p2j", specifier = ">=1.3.2" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "uvicorn", specifier = ">=0.51.0" },
@@ -1881,6 +1880,7 @@ dev = [
     { name = "ipywidgets", specifier = ">=8.1.8" },
     { name = "matplotlib", specifier = ">=3.11.0" },
     { name = "numpy", specifier = ">=2.4.6" },
+    { name = "p2j", specifier = ">=1.3.2" },
     { name = "pytest", specifier = ">=9.1.1" },
 ]
 

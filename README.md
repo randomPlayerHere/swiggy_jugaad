@@ -6,11 +6,17 @@ only the missing items.**
 
 > Swiggy knows what enters your kitchen. This models what's still in it.
 
+[![tests](https://github.com/randomPlayerHere/swiggy_jugaad/actions/workflows/tests.yml/badge.svg)](https://github.com/randomPlayerHere/swiggy_jugaad/actions/workflows/tests.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-SSE-009688?logo=fastapi&logoColor=white)
 ![MCP](https://img.shields.io/badge/Swiggy-MCP-FC8019)
 ![NVIDIA NIM](https://img.shields.io/badge/LLM-NVIDIA%20NIM-76B900?logo=nvidia&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+<p align="center">
+  <img src="docs/screenshot.png" alt="Swiggy Jugaad web chat ranking recipes by what the household probably owns, next to the under-the-hood panel showing each pantry item's decay curve and the agent's live tool calls" width="900">
+</p>
 
 Built on the Swiggy MCP beta (Food / Instamart / Dineout) for the Swiggy
 Builders Club. It places real Instamart orders against a real account.
@@ -64,7 +70,8 @@ household gets asked less often the longer it uses the app.
   <img src="docs/decay_chart.png" alt="Confidence decay curves for milk (household of 1), rice (household of 4) and rice (household of 1) over 30 days" width="720">
 </p>
 
-The chart is generated from the production scoring function, not drawn by hand.
+The chart is generated from the production scoring function by
+[`scripts/decay_chart.py`](scripts/decay_chart.py), not drawn by hand.
 
 For each item, confidence is the probability that it's still usable:
 
@@ -213,8 +220,9 @@ names are classified by an LLM in batches of 40 at temperature 0.
 
 ### Tests
 
-78 tests that run offline in about 15 seconds. The LLM and Swiggy are both
-faked, and each test gets a fresh SQLite database. They cover the golden
+78 tests that run offline in a few seconds, with no API keys or Swiggy
+token. The LLM and Swiggy are both faked, and each test gets a fresh SQLite
+database. They cover the golden
 vectors and properties from `MATH.md`, agent loop failure paths, cap and
 matching logic, recipe ranking, and the web API.
 
@@ -241,8 +249,8 @@ matching logic, recipe ranking, and the web API.
 ### Setup
 
 ```bash
-git clone https://github.com/randomPlayerHere/swiggy_buzz.git
-cd swiggy_buzz
+git clone https://github.com/randomPlayerHere/swiggy_jugaad.git
+cd swiggy_jugaad
 uv sync
 
 cp .env.example .env              # add NVIDIA_API_KEY
@@ -293,8 +301,24 @@ uv run uvicorn swiggy_jugaad.webapp:app
 ### Tests
 
 ```bash
-uv run pytest
+uv run pytest   # offline, no keys or Swiggy token needed
 ```
+
+### Troubleshooting
+
+Run `uv run scripts/demo_preflight.py` first. It checks the keys, the models,
+the token's expiry and that Swiggy is reachable, without spending any LLM
+inference.
+
+- **"Reconnect Swiggy" / 401 from Swiggy.** The token lasts about 5 days and
+  can't be refreshed. Run `uv run scripts/swiggy_login.py` again and replace
+  `SWIGGY_ACCESS_TOKEN` in `.env`.
+- **410 or "model not found" from NIM.** NVIDIA retires models from time to
+  time. Pick a tool-calling model from [build.nvidia.com](https://build.nvidia.com)
+  and set `NIM_MODEL` (and `NIM_FALLBACK_MODEL`) in `.env`.
+- **Port 8000 is taken.** `uv run uvicorn swiggy_jugaad.webapp:app --port 8001`.
+- **Login callback fails.** The OAuth redirect listens on port 3030; set
+  `SWIGGY_OAUTH_CALLBACK_PORT` if something else is using it.
 
 ## Web API
 
@@ -325,7 +349,7 @@ uv run pytest
 ├── data/
 │   ├── recipes.json           # recipe DB
 │   └── demo_orders.json       # sample order history for demo mode
-├── scripts/                   # login, preflight, demo reset, smoke tests
+├── scripts/                   # login, preflight, demo reset, smoke tests, decay chart
 ├── docs/                      # README assets
 └── tests/
 ```
@@ -349,7 +373,15 @@ uv run pytest
   and a ₹1000 cap per order.
 - **Planned:** a Telegram or WhatsApp adapter behind the same agent loop.
 
+## About
+
+Built by **Khushal Nirwal**. Questions, feedback and code review are welcome:
+open an issue or reach out.
+
+- GitHub: [@randomPlayerHere](https://github.com/randomPlayerHere)
+- LinkedIn: [khushalnirwal](https://www.linkedin.com/in/khushalnirwal/)
+
 ---
 
 Independent project built for the Swiggy Builders Club. Not an official
-Swiggy product.
+Swiggy product. Released under the [MIT License](LICENSE).
